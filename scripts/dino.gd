@@ -24,8 +24,8 @@ func setup(index: int) -> void:
 		sprite.texture = lvl.texture
 		sprite.visible = true
 		var tex_size := lvl.texture.get_size()
-		var largest_side := max(tex_size.x, tex_size.y, 1.0)
-		var scale_factor := (lvl.radius * 2.0) / largest_side
+		var largest_side: float = max(tex_size.x, tex_size.y, 1.0)
+		var scale_factor: float = (lvl.radius * 2.0) / largest_side
 		sprite.scale = Vector2(scale_factor, scale_factor)
 	else:
 		sprite.visible = false

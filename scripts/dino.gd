@@ -23,9 +23,9 @@ func setup(index: int) -> void:
 	if lvl.texture:
 		sprite.texture = lvl.texture
 		sprite.visible = true
-		var tex_size := lvl.texture.get_size()
-		var largest_side: float = max(tex_size.x, tex_size.y, 1.0)
-		var scale_factor: float = (lvl.radius * 2.0) / largest_side
+		# Scale by the sprite's actual content size, not the raw canvas --
+		# see DinoLevel.content_size.
+		var scale_factor: float = (lvl.radius * 2.0) / max(lvl.content_size, 1.0)
 		sprite.scale = Vector2(scale_factor, scale_factor)
 	else:
 		sprite.visible = false

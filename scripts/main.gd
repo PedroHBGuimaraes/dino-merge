@@ -6,6 +6,8 @@ const LEFT_X := 40.0
 const RIGHT_X := 680.0
 const SPAWN_Y := 100.0
 const MAX_SPAWN_LEVEL := 4  # only the 5 smallest species come out of the spawner
+const SOUND_ON_ICON := preload("res://assets/ui/merge/icon_sound_on.png")
+const SOUND_OFF_ICON := preload("res://assets/ui/merge/icon_sound_off.png")
 
 var next_level_index: int = 0
 var can_drop: bool = true
@@ -13,13 +15,15 @@ var preview_x: float = 360.0
 
 @onready var dinos: Node2D = $Dinos
 @onready var spawner_preview: Node2D = $SpawnerPreview
-@onready var score_label: Label = $UI/ScoreLabel
+@onready var score_label: Label = $UI/ScoreRow/ScoreLabel
 @onready var next_label: Label = $UI/NextLabel
+@onready var sound_toggle_btn: TextureButton = $UI/SoundToggleButton
 @onready var game_over_panel: Control = $UI/GameOverPanel
 @onready
 var final_score_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/FinalScoreLabel
 @onready var record_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/NewRecordLabel
-@onready var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScoreLabel
+@onready
+var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScoreRow/HighScoreLabel
 @onready var continue_btn: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/ContinueButton
 @onready var restart_button: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/RestartButton
 @onready var drop_sfx: AudioStreamPlayer = $DropSfx
@@ -33,6 +37,8 @@ func _ready() -> void:
 	GameManager.game_over.connect(_on_game_over)
 	restart_button.pressed.connect(_on_restart_pressed)
 	continue_btn.pressed.connect(_on_continue_pressed)
+	sound_toggle_btn.pressed.connect(_on_sound_toggle_pressed)
+	_update_sound_icon()
 	music.finished.connect(func(): music.play())
 	randomize()
 	game_over_panel.visible = false
@@ -96,6 +102,18 @@ func spawn_merged_dino(index: int, global_pos: Vector2) -> void:
 	dino.global_position = global_pos
 	dino.setup(index)
 	merge_sfx.play()
+
+
+func _on_sound_toggle_pressed() -> void:
+	var master_bus := AudioServer.get_bus_index("Master")
+	AudioServer.set_bus_mute(master_bus, not AudioServer.is_bus_mute(master_bus))
+	_update_sound_icon()
+
+
+func _update_sound_icon() -> void:
+	var master_bus := AudioServer.get_bus_index("Master")
+	var muted := AudioServer.is_bus_mute(master_bus)
+	sound_toggle_btn.texture_normal = SOUND_OFF_ICON if muted else SOUND_ON_ICON
 
 
 func _on_score_changed(new_score: int) -> void:

@@ -7,6 +7,7 @@ extends Node
 
 signal score_changed(new_score: int)
 signal game_over
+signal continued
 
 const DANGER_LINE_Y := 220.0
 const GAME_OVER_DELAY := 3.0
@@ -38,6 +39,16 @@ func trigger_game_over() -> void:
 		high_score = score
 		_save_high_score()
 	game_over.emit()
+
+
+## Resumes the current run after a rewarded-ad continue: clears the
+## game-over state but deliberately keeps `score` untouched.
+func continue_run() -> void:
+	if not is_game_over:
+		return
+	is_game_over = false
+	is_new_record = false
+	continued.emit()
 
 
 func reset() -> void:

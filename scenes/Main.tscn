@@ -133,6 +133,11 @@ theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 text = "Recorde pessoal: 0"
 
+[node name="ContinueButton" type="Button" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(280, 56)
+text = "📺 Assistir anúncio e continuar"
+
 [node name="RestartButton" type="Button" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(220, 56)
 text = "Jogar novamente"

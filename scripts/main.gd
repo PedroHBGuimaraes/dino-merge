@@ -20,6 +20,7 @@ var preview_x: float = 360.0
 var final_score_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/FinalScoreLabel
 @onready var record_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/NewRecordLabel
 @onready var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScoreLabel
+@onready var continue_btn: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/ContinueButton
 @onready var restart_button: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/RestartButton
 @onready var drop_sfx: AudioStreamPlayer = $DropSfx
 @onready var merge_sfx: AudioStreamPlayer = $MergeSfx
@@ -31,6 +32,7 @@ func _ready() -> void:
 	GameManager.score_changed.connect(_on_score_changed)
 	GameManager.game_over.connect(_on_game_over)
 	restart_button.pressed.connect(_on_restart_pressed)
+	continue_btn.pressed.connect(_on_continue_pressed)
 	music.finished.connect(func(): music.play())
 	randomize()
 	game_over_panel.visible = false
@@ -105,7 +107,44 @@ func _on_game_over() -> void:
 	final_score_label.text = "Pontuação final: %d" % GameManager.score
 	best_label.text = "Recorde pessoal: %d" % GameManager.high_score
 	record_label.visible = GameManager.is_new_record
+	continue_btn.visible = AdsManager.is_rewarded_ad_ready()
+	continue_btn.disabled = false
+	restart_button.disabled = false
+
+
+func _on_continue_pressed() -> void:
+	continue_btn.disabled = true
+	restart_button.disabled = true
+	AdsManager.offer_rewarded_continue(_on_rewarded_continue_result)
+
+
+func _on_rewarded_continue_result(earned: bool) -> void:
+	if not earned:
+		# Declined, ad failed, or became unavailable -- normal game over stands.
+		continue_btn.disabled = false
+		restart_button.disabled = false
+		continue_btn.visible = AdsManager.is_rewarded_ad_ready()
+		return
+	_clear_top_dinos_for_continue()
+	GameManager.continue_run()
+	game_over_panel.visible = false
+	can_drop = true
+	next_level_index = _random_spawn_level()
+	_update_preview()
+
+
+## Frees the topmost half of the current pile (by Y position, so
+## whatever is closest to / above the danger line goes first) to make
+## room for the run to keep going instead of resetting it.
+func _clear_top_dinos_for_continue() -> void:
+	var pile := dinos.get_children()
+	pile.sort_custom(func(a, b): return a.global_position.y < b.global_position.y)
+	var clear_count := int(ceil(pile.size() * 0.5))
+	for i in range(min(clear_count, pile.size())):
+		pile[i].queue_free()
 
 
 func _on_restart_pressed() -> void:
-	get_tree().reload_current_scene()
+	restart_button.disabled = true
+	continue_btn.disabled = true
+	AdsManager.register_game_over_and_continue(func(): get_tree().reload_current_scene())

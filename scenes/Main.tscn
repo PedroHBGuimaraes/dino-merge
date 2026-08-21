@@ -121,6 +121,18 @@ theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 text = "Pontuação final: 0"
 
+[node name="NewRecordLabel" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
+visible = false
+theme_override_colors/font_color = Color(1, 0.84, 0, 1)
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+text = "🏆 Novo recorde!"
+
+[node name="HighScoreLabel" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+text = "Recorde pessoal: 0"
+
 [node name="RestartButton" type="Button" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(220, 56)
 text = "Jogar novamente"

@@ -32,6 +32,26 @@ func setup(index: int) -> void:
 	queue_redraw()
 
 
+## Quick squash-and-overshoot pop, played when this dino was just born
+## from a merge (not when freshly dropped -- the physical fall already
+## reads as "arrival" for those).
+func play_spawn_bounce() -> void:
+	if not sprite.visible:
+		return
+	var base_scale := sprite.scale
+	sprite.scale = base_scale * 0.25
+	var tween := create_tween()
+	(
+		tween
+		. tween_property(sprite, "scale", base_scale * 1.18, 0.1)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(sprite, "scale", base_scale, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_OUT
+	)
+
+
 func _ready() -> void:
 	contact_monitor = true
 	max_contacts_reported = 6
@@ -94,6 +114,6 @@ func _do_merge(other: RigidBody2D) -> void:
 	GameManager.add_score(lvl.score_value)
 	if next_index < DinoChain.level_count():
 		var main := get_tree().current_scene
-		main.spawn_merged_dino(next_index, mid)
+		main.spawn_merged_dino(next_index, mid, lvl.score_value)
 	other.queue_free()
 	queue_free()

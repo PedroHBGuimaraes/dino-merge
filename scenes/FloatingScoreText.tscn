@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cou108jhph4or"]
+
+[ext_resource type="Script" path="res://scripts/floating_score_text.gd" id="1"]
+
+[node name="FloatingScoreText" type="Node2D"]
+script = ExtResource("1")

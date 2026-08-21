@@ -1,6 +1,7 @@
 extends Node2D
 
 const DINO_SCENE := preload("res://scenes/Dino.tscn")
+const FLOATING_SCORE_SCENE := preload("res://scenes/FloatingScoreText.tscn")
 
 const LEFT_X := 40.0
 const RIGHT_X := 680.0
@@ -9,16 +10,22 @@ const MAX_SPAWN_LEVEL := 4  # only the 5 smallest species come out of the spawne
 const SOUND_ON_ICON := preload("res://assets/ui/merge/icon_sound_on.png")
 const SOUND_OFF_ICON := preload("res://assets/ui/merge/icon_sound_off.png")
 
+## From this level index up, a merge is rare/special enough to earn a
+## screen shake on top of the usual particles/pop (top ~6 of 32 levels).
+const HIGH_MERGE_SHAKE_LEVEL := 26
+
 var next_level_index: int = 0
 var can_drop: bool = true
 var preview_x: float = 360.0
 
+@onready var camera: Camera2D = $Camera2D
 @onready var dinos: Node2D = $Dinos
 @onready var spawner_preview: Node2D = $SpawnerPreview
 @onready var score_label: Label = $UI/ScoreRow/ScoreLabel
 @onready var next_label: Label = $UI/NextLabel
 @onready var sound_toggle_btn: TextureButton = $UI/SoundToggleButton
 @onready var game_over_panel: Control = $UI/GameOverPanel
+@onready var game_over_vbox: VBoxContainer = $UI/GameOverPanel/CenterContainer/VBoxContainer
 @onready
 var final_score_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/FinalScoreLabel
 @onready var record_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/NewRecordLabel
@@ -29,6 +36,9 @@ var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScor
 @onready var drop_sfx: AudioStreamPlayer = $DropSfx
 @onready var merge_sfx: AudioStreamPlayer = $MergeSfx
 @onready var music: AudioStreamPlayer = $Music
+@onready var game_over_sfx: AudioStreamPlayer = $GameOverSfx
+@onready var record_sfx: AudioStreamPlayer = $RecordSfx
+@onready var ui_click_sfx: AudioStreamPlayer = $UiClickSfx
 
 
 func _ready() -> void:
@@ -95,16 +105,72 @@ func _update_preview() -> void:
 	next_label.text = "Próximo: " + DinoChain.get_level(next_level_index).dino_name
 
 
-func spawn_merged_dino(index: int, global_pos: Vector2) -> void:
+func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> void:
 	var dino := DINO_SCENE.instantiate()
 	dinos.add_child(dino)
 	dino.add_to_group("dino")
 	dino.global_position = global_pos
 	dino.setup(index)
+	dino.play_spawn_bounce()
+
+	# Pitch (and a touch of volume) climbs with the merged level, so a
+	# low-tier merge sounds subtly different from a top-of-the-chain one.
+	var level_fraction := float(index) / float(DinoChain.level_count() - 1)
+	merge_sfx.pitch_scale = 1.0 + level_fraction * 1.1
+	merge_sfx.volume_db = level_fraction * 4.0
 	merge_sfx.play()
+
+	_spawn_floating_score(global_pos, score_awarded)
+	_spawn_merge_particles(global_pos, index)
+	if index >= HIGH_MERGE_SHAKE_LEVEL:
+		_screen_shake(7.0, 0.35)
+
+
+func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:
+	var popup := FLOATING_SCORE_SCENE.instantiate()
+	add_child(popup)
+	popup.global_position = global_pos + Vector2(0, -20)
+	popup.text = "+%d" % amount
+
+
+func _spawn_merge_particles(global_pos: Vector2, index: int) -> void:
+	var particles := CPUParticles2D.new()
+	add_child(particles)
+	particles.global_position = global_pos
+	particles.one_shot = true
+	particles.emitting = false
+	particles.amount = 10 + index * 2
+	particles.lifetime = 0.45 + index * 0.015
+	particles.explosiveness = 0.9
+	particles.direction = Vector2.UP
+	particles.spread = 180.0
+	particles.gravity = Vector2(0, 320)
+	particles.initial_velocity_min = 60.0 + index * 3.5
+	particles.initial_velocity_max = 110.0 + index * 5.0
+	particles.scale_amount_min = 3.0
+	particles.scale_amount_max = 5.0 + index * 0.25
+	# Bright/pale version of the level's hue -- the level's own color (same
+	# saturation as the dino) blended right into the dino and background
+	# and was invisible in practice; low saturation + near-white value
+	# reads as a "sparkle" against anything behind it.
+	var level_hue := DinoChain.get_level(index).color.h
+	particles.color = Color.from_hsv(level_hue, 0.35, 1.0)
+	particles.emitting = true
+	await get_tree().create_timer(particles.lifetime + 0.2).timeout
+	particles.queue_free()
+
+
+func _screen_shake(strength: float, duration: float) -> void:
+	var elapsed := 0.0
+	while elapsed < duration:
+		camera.offset = Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
+		await get_tree().create_timer(0.02).timeout
+		elapsed += 0.02
+	camera.offset = Vector2.ZERO
 
 
 func _on_sound_toggle_pressed() -> void:
+	ui_click_sfx.play()
 	var master_bus := AudioServer.get_bus_index("Master")
 	AudioServer.set_bus_mute(master_bus, not AudioServer.is_bus_mute(master_bus))
 	_update_sound_icon()
@@ -121,7 +187,6 @@ func _on_score_changed(new_score: int) -> void:
 
 
 func _on_game_over() -> void:
-	game_over_panel.visible = true
 	final_score_label.text = "Pontuação final: %d" % GameManager.score
 	best_label.text = "Recorde pessoal: %d" % GameManager.high_score
 	record_label.visible = GameManager.is_new_record
@@ -129,8 +194,29 @@ func _on_game_over() -> void:
 	continue_btn.disabled = false
 	restart_button.disabled = false
 
+	if GameManager.is_new_record:
+		record_sfx.play()
+	else:
+		game_over_sfx.play()
+
+	game_over_panel.visible = true
+	game_over_panel.modulate.a = 0.0
+	game_over_vbox.scale = Vector2(0.7, 0.7)
+	await get_tree().process_frame  # let layout settle so pivot_offset/size are valid
+	game_over_vbox.pivot_offset = game_over_vbox.size / 2.0
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(game_over_panel, "modulate:a", 1.0, 0.25)
+	(
+		tween
+		. tween_property(game_over_vbox, "scale", Vector2.ONE, 0.35)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
+
 
 func _on_continue_pressed() -> void:
+	ui_click_sfx.play()
 	continue_btn.disabled = true
 	restart_button.disabled = true
 	AdsManager.offer_rewarded_continue(_on_rewarded_continue_result)
@@ -163,6 +249,7 @@ func _clear_top_dinos_for_continue() -> void:
 
 
 func _on_restart_pressed() -> void:
+	ui_click_sfx.play()
 	restart_button.disabled = true
 	continue_btn.disabled = true
 	AdsManager.register_game_over_and_continue(func(): get_tree().reload_current_scene())

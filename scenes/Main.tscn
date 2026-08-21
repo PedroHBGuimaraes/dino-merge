@@ -1,11 +1,14 @@
-[gd_scene load_steps=14 format=3 uid="uid://bqmerge0main"]
+[gd_scene load_steps=17 format=3 uid="uid://bqmerge0main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/spawner_preview.gd" id="2"]
 [ext_resource type="Texture2D" path="res://assets/scenes/bg_crater.png" id="3"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/tap.wav" id="4"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/evolve.wav" id="5"]
-[ext_resource type="AudioStream" path="res://assets/audio/music/island_theme.ogg" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/canyon_theme.ogg" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/game_over.wav" id="13"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/new_record.wav" id="14"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/click.wav" id="15"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_score.png" id="7"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_trophy.png" id="8"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_ad.png" id="9"]
@@ -21,6 +24,10 @@ size = Vector2(660, 20)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+anchor_mode = 0
+position = Vector2(0, 0)
 
 [node name="BackgroundLayer" type="CanvasLayer" parent="."]
 layer = -10
@@ -121,6 +128,15 @@ stream = ExtResource("5")
 [node name="Music" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6")
 autoplay = true
+
+[node name="GameOverSfx" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("13")
+
+[node name="RecordSfx" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("14")
+
+[node name="UiClickSfx" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("15")
 
 [node name="UI" type="CanvasLayer" parent="."]
 

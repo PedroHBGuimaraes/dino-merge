@@ -18,6 +18,15 @@ const MAX_SPAWN_LEVEL := 4  # only the 5 smallest species come out of the spawne
 const SOUND_ON_ICON := preload("res://assets/ui/merge/icon_sound_on.png")
 const SOUND_OFF_ICON := preload("res://assets/ui/merge/icon_sound_off.png")
 
+## Background swaps to a more intense variant as the current run's score
+## climbs -- more bones, brighter lava cracks -- purely a score
+## threshold, not a continuous transition (see bg_crater_mid/_high.png).
+const BG_BASE := preload("res://assets/scenes/bg_crater.png")
+const BG_MID := preload("res://assets/scenes/bg_crater_mid.png")
+const BG_HIGH := preload("res://assets/scenes/bg_crater_high.png")
+const BG_MID_SCORE := 300
+const BG_HIGH_SCORE := 800
+
 ## From this level index up, a merge is rare/special enough to earn a
 ## screen shake on top of the usual particles/pop (top ~6 of 32 levels).
 const HIGH_MERGE_SHAKE_LEVEL := 26
@@ -28,8 +37,10 @@ var next_level_index: int = 0
 var can_drop: bool = true
 var preview_x: float = 360.0
 var drop_shadow: Node2D
+var _bg_tier: int = 0
 
 @onready var camera: Camera2D = $Camera2D
+@onready var background: TextureRect = $BackgroundLayer/Background
 @onready var gameplay_root: Node2D = $GameplayRoot
 @onready var dinos: Node2D = $GameplayRoot/Dinos
 @onready var spawner_preview: Node2D = $GameplayRoot/SpawnerPreview
@@ -438,6 +449,28 @@ func _on_pause_menu_pressed() -> void:
 
 func _on_score_changed(new_score: int) -> void:
 	score_label.text = "Pontos: %d" % new_score
+	_update_background(new_score)
+
+
+## Only swaps the texture when crossing into a new tier, not every
+## score change -- background.texture assignment isn't free and most
+## score_changed events don't cross a threshold.
+func _update_background(current_score: int) -> void:
+	var tier := 0
+	if current_score >= BG_HIGH_SCORE:
+		tier = 2
+	elif current_score >= BG_MID_SCORE:
+		tier = 1
+	if tier == _bg_tier:
+		return
+	_bg_tier = tier
+	match tier:
+		0:
+			background.texture = BG_BASE
+		1:
+			background.texture = BG_MID
+		2:
+			background.texture = BG_HIGH
 
 
 func _on_game_over() -> void:

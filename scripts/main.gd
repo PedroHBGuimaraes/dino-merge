@@ -59,6 +59,8 @@ var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScor
 @onready var game_over_sfx: AudioStreamPlayer = $GameOverSfx
 @onready var record_sfx: AudioStreamPlayer = $RecordSfx
 @onready var ui_click_sfx: AudioStreamPlayer = $UiClickSfx
+@onready var legendary_banner: Label = $UI/LegendaryBanner
+@onready var tutorial_panel: Control = $UI/TutorialPanel
 
 
 func _ready() -> void:
@@ -84,8 +86,13 @@ func _ready() -> void:
 	pause_panel.visible = false
 	confirm_restart_panel.visible = false
 	pause_settings_panel.visible = false
+	legendary_banner.visible = false
+	tutorial_panel.visible = false
 	next_level_index = _random_spawn_level()
 	_update_preview()
+
+	if not GameManager.has_seen_tutorial:
+		tutorial_panel.open()
 
 
 ## Scales + centers GameplayRoot so the fixed-coordinate container/dinos/
@@ -178,8 +185,18 @@ func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> v
 
 	_spawn_floating_score(global_pos, score_awarded)
 	_spawn_merge_particles(global_pos, index)
+
+	# Subtle by default, stronger the higher the merged level -- and the
+	# very top of the chain gets a distinctly longer buzz on top of its
+	# own shake + banner, since that merge is rare enough to deserve a
+	# more noticeable cue than "just a bigger version of every other one".
+	Input.vibrate_handheld(int(20 + level_fraction * 60))
+
 	if index >= HIGH_MERGE_SHAKE_LEVEL:
 		_screen_shake(7.0, 0.35)
+	if index == DinoChain.level_count() - 1:
+		Input.vibrate_handheld(200)
+		_show_legendary_banner()
 
 
 func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:
@@ -225,6 +242,30 @@ func _screen_shake(strength: float, duration: float) -> void:
 	camera.offset = Vector2.ZERO
 
 
+## Big transient banner for the rarest possible event: creating the
+## very last (highest) level in the chain via a merge. Timed alongside
+## the screen shake that already fires for this same top tier.
+func _show_legendary_banner() -> void:
+	legendary_banner.modulate.a = 0.0
+	legendary_banner.scale = Vector2(0.5, 0.5)
+	legendary_banner.visible = true
+	await get_tree().process_frame
+	legendary_banner.pivot_offset = legendary_banner.size / 2.0
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(legendary_banner, "modulate:a", 1.0, 0.2)
+	(
+		tween
+		. tween_property(legendary_banner, "scale", Vector2.ONE, 0.3)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.set_parallel(false)
+	tween.tween_interval(1.2)
+	tween.tween_property(legendary_banner, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(func(): legendary_banner.visible = false)
+
+
 func _on_sound_toggle_pressed() -> void:
 	ui_click_sfx.play()
 	var master_bus := AudioServer.get_bus_index("Master")
@@ -244,6 +285,9 @@ func _update_sound_icon() -> void:
 ## nested overlays explicit instead of depending on input propagation
 ## order between sibling Controls.
 func _handle_back_button() -> void:
+	if tutorial_panel.visible:
+		tutorial_panel.dismiss()
+		return
 	if pause_settings_panel.visible:
 		pause_settings_panel.close()
 		return

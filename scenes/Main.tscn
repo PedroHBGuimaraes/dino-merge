@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://bqmerge0main"]
+[gd_scene load_steps=25 format=3 uid="uid://bqmerge0main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/spawner_preview.gd" id="2"]
@@ -19,6 +19,10 @@
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_home.png" id="17"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_gear.png" id="18"]
 [ext_resource type="PackedScene" path="res://scenes/SettingsPanel.tscn" id="19"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_touch.png" id="20"]
+[ext_resource type="Texture2D" path="res://assets/dino/dino_compsognathus_adulto.png" id="21"]
+[ext_resource type="Texture2D" path="res://assets/dino/dino_dimorphodon_adulto.png" id="22"]
+[ext_resource type="Script" path="res://scripts/tutorial_panel.gd" id="23"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(20, 1140)
@@ -379,3 +383,120 @@ text = "Cancelar"
 
 [node name="SettingsPanel" parent="UI/PausePanel" instance=ExtResource("19")]
 visible = false
+
+[node name="LegendaryBanner" type="Label" parent="UI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "🦖 LENDÁRIO! 🦖"
+
+[node name="TutorialPanel" type="Control" parent="UI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("23")
+
+[node name="Overlay" type="ColorRect" parent="UI/TutorialPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.88)
+
+[node name="CenterContainer" type="CenterContainer" parent="UI/TutorialPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/TutorialPanel/CenterContainer"]
+custom_minimum_size = Vector2(300, 0)
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Step1" type="VBoxContainer" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step1"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("20")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step1"]
+custom_minimum_size = Vector2(280, 0)
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Toque e arraste para escolher onde soltar o dino. Solte para deixá-lo cair."
+
+[node name="Step2" type="VBoxContainer" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
+visible = false
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Row" type="HBoxContainer" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="A" type="TextureRect" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2/Row"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Plus" type="Label" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2/Row"]
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 26
+text = "+"
+
+[node name="B" type="TextureRect" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2/Row"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Arrow" type="Label" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2/Row"]
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_font_sizes/font_size = 26
+text = "→"
+
+[node name="C" type="TextureRect" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2/Row"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("22")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/TutorialPanel/CenterContainer/VBoxContainer/Step2"]
+custom_minimum_size = Vector2(280, 0)
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Dois dinos do mesmo nível que se tocam se fundem no próximo da cadeia!"
+
+[node name="NextButton" type="Button" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Próximo"
+
+[node name="SkipButton" type="Button" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Pular"

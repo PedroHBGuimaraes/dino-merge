@@ -118,6 +118,12 @@ func _do_merge(other: RigidBody2D) -> void:
 	GameManager.add_score(lvl.score_value)
 	if next_index < DinoChain.level_count():
 		var main := get_tree().current_scene
-		main.spawn_merged_dino(next_index, mid, lvl.score_value)
+		# _do_merge runs from the body_entered signal, which fires while
+		# the physics server is still flushing collision queries -- it
+		# refuses synchronous physics-state changes at that point
+		# (add_child on a RigidBody2D, then assigning its collision
+		# shape in setup()). Deferring the whole call runs it right
+		# after the flush finishes, which is safe.
+		main.spawn_merged_dino.call_deferred(next_index, mid, lvl.score_value)
 	other.queue_free()
 	queue_free()

@@ -199,6 +199,43 @@ func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> v
 		_show_legendary_banner()
 
 
+## Quick expanding radial flash at the merge point, played right as the
+## two source dinos vanish and the merged one is born -- masks that
+## swap instant with a "morph" pulse instead of a bare pop. Built from a
+## GradientTexture2D purely in code, no art asset needed.
+func spawn_merge_flash(global_pos: Vector2) -> void:
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(1.0, 1.0, 0.9, 1.0))
+	gradient.set_color(1, Color(1.0, 1.0, 0.9, 0.0))
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 128
+	tex.height = 128
+
+	var flash := Sprite2D.new()
+	gameplay_root.add_child(flash)
+	flash.texture = tex
+	flash.global_position = global_pos
+	flash.modulate.a = 0.0
+	flash.scale = Vector2(0.3, 0.3)
+	flash.z_index = 10
+
+	var tween := create_tween()
+	tween.tween_property(flash, "modulate:a", 1.0, 0.05)
+	(
+		tween
+		. parallel()
+		. tween_property(flash, "scale", Vector2(1.4, 1.4), 0.18)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(flash, "modulate:a", 0.0, 0.15)
+	tween.tween_callback(flash.queue_free)
+
+
 func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:
 	var popup := FLOATING_SCORE_SCENE.instantiate()
 	gameplay_root.add_child(popup)

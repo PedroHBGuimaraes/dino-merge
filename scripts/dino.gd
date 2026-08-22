@@ -41,22 +41,23 @@ func setup(index: int) -> void:
 	queue_redraw()
 
 
-## Quick squash-and-overshoot pop, played when this dino was just born
-## from a merge (not when freshly dropped -- the physical fall already
-## reads as "arrival" for those).
+## "Impact" pop played when this dino was just born from a merge (not
+## when freshly dropped -- the physical fall already reads as "arrival"
+## for those): starts squashed wide/flat as if it just landed hard,
+## overshoots tall/thin, then settles to its normal proportions.
 func play_spawn_bounce() -> void:
 	if not sprite.visible:
 		return
 	var base_scale := sprite.scale
-	sprite.scale = base_scale * 0.25
+	sprite.scale = Vector2(base_scale.x * 1.35, base_scale.y * 0.55)
 	var tween := create_tween()
 	(
 		tween
-		. tween_property(sprite, "scale", base_scale * 1.18, 0.1)
-		. set_trans(Tween.TRANS_BACK)
+		. tween_property(sprite, "scale", Vector2(base_scale.x * 0.85, base_scale.y * 1.2), 0.09)
+		. set_trans(Tween.TRANS_QUAD)
 		. set_ease(Tween.EASE_OUT)
 	)
-	tween.tween_property(sprite, "scale", base_scale, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(
+	tween.tween_property(sprite, "scale", base_scale, 0.14).set_trans(Tween.TRANS_BACK).set_ease(
 		Tween.EASE_OUT
 	)
 
@@ -128,22 +129,62 @@ func _on_body_entered(body: Node) -> void:
 	if get_instance_id() < other.get_instance_id():
 		_merging = true
 		other.set("_merging", true)
-		_do_merge(other)
+		# body_entered fires while the physics server is still flushing
+		# collision queries -- it refuses synchronous physics-state
+		# changes at that point (freezing a body, add_child on a
+		# RigidBody2D, reassigning a collision shape). Deferring the
+		# whole call runs it right after the flush finishes, which is
+		# safe, and _do_merge needs that safety for longer than a single
+		# call now that it animates the approach before merging.
+		_do_merge.call_deferred(other)
 
 
+## Brief approach-and-merge sequence: the two dinos are pulled a bit
+## toward their midpoint (with a light shrink, like they're being
+## sucked together) instead of vanishing on contact, then a flash plays
+## at the meeting point and the merged dino is born there --
+## play_spawn_bounce() gives it the "impact" landing pose.
 func _do_merge(other: RigidBody2D) -> void:
+	if not is_instance_valid(other):
+		return
+	freeze = true
+	other.freeze = true
+	linear_velocity = Vector2.ZERO
+	other.linear_velocity = Vector2.ZERO
+
 	var mid := (global_position + other.global_position) / 2.0
+	var my_target: Vector2 = global_position.lerp(mid, 0.4)
+	var other_target: Vector2 = other.global_position.lerp(mid, 0.4)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	(
+		tween
+		. tween_property(self, "global_position", my_target, 0.1)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		tween
+		. tween_property(other, "global_position", other_target, 0.1)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	tween.tween_property(sprite, "scale", sprite.scale * 0.8, 0.1)
+	tween.tween_property(other.sprite, "scale", other.sprite.scale * 0.8, 0.1)
+	await tween.finished
+
+	if not is_instance_valid(other):
+		return
+
 	var lvl := DinoChain.get_level(level_index)
 	var next_index := level_index + 1
 	GameManager.add_score(lvl.score_value)
+
+	var main := get_tree().current_scene
+	main.spawn_merge_flash(mid)
 	if next_index < DinoChain.level_count():
-		var main := get_tree().current_scene
-		# _do_merge runs from the body_entered signal, which fires while
-		# the physics server is still flushing collision queries -- it
-		# refuses synchronous physics-state changes at that point
-		# (add_child on a RigidBody2D, then assigning its collision
-		# shape in setup()). Deferring the whole call runs it right
-		# after the flush finishes, which is safe.
-		main.spawn_merged_dino.call_deferred(next_index, mid, lvl.score_value)
+		main.spawn_merged_dino(next_index, mid, lvl.score_value)
+
 	other.queue_free()
 	queue_free()

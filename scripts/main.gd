@@ -31,12 +31,9 @@ const BG_HIGH_SCORE := 800
 ## screen shake on top of the usual particles/pop (top ~6 of 32 levels).
 const HIGH_MERGE_SHAKE_LEVEL := 26
 
-const DROP_SHADOW_SCRIPT := preload("res://scripts/drop_shadow.gd")
-
 var next_level_index: int = 0
 var can_drop: bool = true
 var preview_x: float = 360.0
-var drop_shadow: Node2D
 var _bg_tier: int = 0
 
 @onready var camera: Camera2D = $Camera2D
@@ -103,8 +100,6 @@ func _ready() -> void:
 	pause_settings_panel.visible = false
 	legendary_banner.visible = false
 	tutorial_panel.visible = false
-	drop_shadow = _create_drop_shadow()
-	gameplay_root.add_child(drop_shadow)
 	next_level_index = _random_spawn_level()
 	_update_preview()
 
@@ -161,7 +156,6 @@ func _move_preview(x: float) -> void:
 	var radius := DinoChain.get_level(next_level_index).radius
 	preview_x = clamp(x, LEFT_X + radius, RIGHT_X - radius)
 	spawner_preview.position.x = preview_x
-	_update_drop_shadow()
 
 
 func _drop() -> void:
@@ -171,7 +165,13 @@ func _drop() -> void:
 	var dino := DINO_SCENE.instantiate()
 	dinos.add_child(dino)
 	dino.add_to_group("dino")
-	dino.global_position = Vector2(preview_x, SPAWN_Y)
+	# preview_x/SPAWN_Y are in GameplayRoot's local design space (same as
+	# spawner_preview.position, which tracks the drag correctly) -- must
+	# go through to_global() before assigning global_position, otherwise
+	# this only lines up when the runtime scale/offset happens to be
+	# identity, and drifts right/down from the actual drag position by
+	# more the further GameplayRoot's fit differs from 1:1.
+	dino.global_position = gameplay_root.to_global(Vector2(preview_x, SPAWN_Y))
 	dino.setup(next_level_index)
 	drop_sfx.play()
 	next_level_index = _random_spawn_level()
@@ -184,42 +184,6 @@ func _update_preview() -> void:
 	spawner_preview.set_level(next_level_index)
 	spawner_preview.position.x = preview_x
 	next_label.text = "Próximo: " + DinoChain.get_level(next_level_index).dino_name
-	_update_drop_shadow()
-
-
-## Builds the flat dark ellipse used to mark where the currently-held
-## dino would land -- see drop_shadow.gd.
-func _create_drop_shadow() -> Node2D:
-	var shadow := Node2D.new()
-	shadow.set_script(DROP_SHADOW_SCRIPT)
-	# Floor/pile art already sits at z_index 0; without a bump the shadow
-	# would draw *underneath* the floor's opaque fill and never be seen.
-	shadow.z_index = 1
-	return shadow
-
-
-## Raycasts straight down from the drop point at the current preview X
-## to find where the held dino would actually land -- the floor, or the
-## top of whatever's already piled up there -- and resizes the shadow
-## to match that dino's real diameter. Called on every drag move and
-## whenever the preview dino changes, per the "atualiza em tempo real"
-## requirement; not re-cast every frame since nothing changes between
-## drags.
-func _update_drop_shadow() -> void:
-	if GameManager.is_game_over:
-		drop_shadow.visible = false
-		return
-	var lvl := DinoChain.get_level(next_level_index)
-	var origin := gameplay_root.to_global(Vector2(preview_x, SPAWN_Y))
-	var target := gameplay_root.to_global(Vector2(preview_x, 1210.0))
-	var query := PhysicsRayQueryParameters2D.create(origin, target)
-	query.collision_mask = 3  # dinos (layer 2) + floor/walls (layer 1)
-	var result := get_world_2d().direct_space_state.intersect_ray(query)
-	var landing_y: float = result.position.y if result else target.y
-
-	drop_shadow.visible = true
-	drop_shadow.global_position = Vector2(origin.x, landing_y)
-	drop_shadow.set_radius(lvl.radius)
 
 
 func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> void:
@@ -481,7 +445,6 @@ func _on_game_over() -> void:
 	continue_btn.disabled = false
 	restart_button.disabled = false
 	pause_button.visible = false
-	drop_shadow.visible = false
 
 	if GameManager.is_new_record:
 		record_sfx.play()

@@ -86,8 +86,8 @@ const CONTENT_SIZE := {
 }
 
 const ASSET_DIR := "res://assets/dino"
-const MIN_RADIUS := 18.0
-const RADIUS_STEP := 3.8
+const MIN_RADIUS := 22.0
+const RADIUS_STEP := 4.6
 
 var levels: Array[DinoLevel] = []
 

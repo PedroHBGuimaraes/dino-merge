@@ -40,82 +40,84 @@ texture = ExtResource("3")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Container" type="Node2D" parent="."]
+[node name="GameplayRoot" type="Node2D" parent="."]
 
-[node name="WallLeft" type="StaticBody2D" parent="Container"]
+[node name="Container" type="Node2D" parent="GameplayRoot"]
+
+[node name="WallLeft" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(40, 630)
 collision_layer = 1
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Container/WallLeft"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GameplayRoot/Container/WallLeft"]
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="Fill" type="ColorRect" parent="Container/WallLeft"]
+[node name="Fill" type="ColorRect" parent="GameplayRoot/Container/WallLeft"]
 offset_left = -10.0
 offset_top = -570.0
 offset_right = 10.0
 offset_bottom = 570.0
 color = Color(0.35, 0.19, 0.11, 0.92)
 
-[node name="Rim" type="ColorRect" parent="Container/WallLeft"]
+[node name="Rim" type="ColorRect" parent="GameplayRoot/Container/WallLeft"]
 offset_left = 6.0
 offset_top = -570.0
 offset_right = 10.0
 offset_bottom = 570.0
 color = Color(0.85, 0.62, 0.28, 1)
 
-[node name="WallRight" type="StaticBody2D" parent="Container"]
+[node name="WallRight" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(680, 630)
 collision_layer = 1
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Container/WallRight"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GameplayRoot/Container/WallRight"]
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="Fill" type="ColorRect" parent="Container/WallRight"]
+[node name="Fill" type="ColorRect" parent="GameplayRoot/Container/WallRight"]
 offset_left = -10.0
 offset_top = -570.0
 offset_right = 10.0
 offset_bottom = 570.0
 color = Color(0.35, 0.19, 0.11, 0.92)
 
-[node name="Rim" type="ColorRect" parent="Container/WallRight"]
+[node name="Rim" type="ColorRect" parent="GameplayRoot/Container/WallRight"]
 offset_left = -10.0
 offset_top = -570.0
 offset_right = -6.0
 offset_bottom = 570.0
 color = Color(0.85, 0.62, 0.28, 1)
 
-[node name="Floor" type="StaticBody2D" parent="Container"]
+[node name="Floor" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(360, 1200)
 collision_layer = 1
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Container/Floor"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GameplayRoot/Container/Floor"]
 shape = SubResource("RectangleShape2D_floor")
 
-[node name="Fill" type="ColorRect" parent="Container/Floor"]
+[node name="Fill" type="ColorRect" parent="GameplayRoot/Container/Floor"]
 offset_left = -330.0
 offset_top = -10.0
 offset_right = 330.0
 offset_bottom = 10.0
 color = Color(0.35, 0.19, 0.11, 0.92)
 
-[node name="Rim" type="ColorRect" parent="Container/Floor"]
+[node name="Rim" type="ColorRect" parent="GameplayRoot/Container/Floor"]
 offset_left = -330.0
 offset_top = -10.0
 offset_right = 330.0
 offset_bottom = -6.0
 color = Color(0.85, 0.62, 0.28, 1)
 
-[node name="DangerLine" type="Line2D" parent="Container"]
+[node name="DangerLine" type="Line2D" parent="GameplayRoot/Container"]
 points = PackedVector2Array(40, 220, 680, 220)
 width = 3.0
 default_color = Color(1, 0.4, 0.05, 0.85)
 
-[node name="Dinos" type="Node2D" parent="."]
+[node name="Dinos" type="Node2D" parent="GameplayRoot"]
 
-[node name="SpawnerPreview" type="Node2D" parent="."]
+[node name="SpawnerPreview" type="Node2D" parent="GameplayRoot"]
 position = Vector2(360, 100)
 script = ExtResource("2")
 

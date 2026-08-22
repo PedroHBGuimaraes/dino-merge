@@ -3,9 +3,17 @@ extends Node2D
 const DINO_SCENE := preload("res://scenes/Dino.tscn")
 const FLOATING_SCORE_SCENE := preload("res://scenes/FloatingScoreText.tscn")
 
+## The whole container/dinos/spawner subtree was designed against this
+## reference canvas. GameplayRoot gets scaled + centered to fit whatever
+## the actual viewport is (see _fit_gameplay_to_viewport), so every
+## coordinate below stays in this fixed design space regardless of the
+## real screen/window size -- nothing else needs to change per device.
+const DESIGN_SIZE := Vector2(720.0, 1280.0)
+
 const LEFT_X := 40.0
 const RIGHT_X := 680.0
 const SPAWN_Y := 100.0
+const DANGER_LINE_Y_DESIGN := 220.0
 const MAX_SPAWN_LEVEL := 4  # only the 5 smallest species come out of the spawner
 const SOUND_ON_ICON := preload("res://assets/ui/merge/icon_sound_on.png")
 const SOUND_OFF_ICON := preload("res://assets/ui/merge/icon_sound_off.png")
@@ -19,8 +27,9 @@ var can_drop: bool = true
 var preview_x: float = 360.0
 
 @onready var camera: Camera2D = $Camera2D
-@onready var dinos: Node2D = $Dinos
-@onready var spawner_preview: Node2D = $SpawnerPreview
+@onready var gameplay_root: Node2D = $GameplayRoot
+@onready var dinos: Node2D = $GameplayRoot/Dinos
+@onready var spawner_preview: Node2D = $GameplayRoot/SpawnerPreview
 @onready var score_label: Label = $UI/ScoreRow/ScoreLabel
 @onready var next_label: Label = $UI/NextLabel
 @onready var sound_toggle_btn: TextureButton = $UI/SoundToggleButton
@@ -42,6 +51,7 @@ var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScor
 
 
 func _ready() -> void:
+	_fit_gameplay_to_viewport()
 	GameManager.reset()
 	GameManager.score_changed.connect(_on_score_changed)
 	GameManager.game_over.connect(_on_game_over)
@@ -56,6 +66,19 @@ func _ready() -> void:
 	_update_preview()
 
 
+## Scales + centers GameplayRoot so the fixed-coordinate container/dinos/
+## spawner subtree (designed for DESIGN_SIZE) always fits fully inside
+## whatever the actual viewport turns out to be -- otherwise anything
+## set up assuming a 720x1280 canvas (walls at x=680, floor at y=1200,
+## ...) simply falls outside a smaller one and is never seen.
+func _fit_gameplay_to_viewport() -> void:
+	var vp_size := get_viewport_rect().size
+	var scale_factor: float = min(vp_size.x / DESIGN_SIZE.x, vp_size.y / DESIGN_SIZE.y)
+	gameplay_root.scale = Vector2(scale_factor, scale_factor)
+	gameplay_root.position = (vp_size - DESIGN_SIZE * scale_factor) / 2.0
+	GameManager.danger_line_y = gameplay_root.to_global(Vector2(0, DANGER_LINE_Y_DESIGN)).y
+
+
 func _random_spawn_level() -> int:
 	return randi() % (MAX_SPAWN_LEVEL + 1)
 
@@ -64,17 +87,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	if GameManager.is_game_over:
 		return
 	if event is InputEventScreenDrag:
-		_move_preview(event.position.x)
+		_move_preview(_to_gameplay_x(event.position.x))
 	elif event is InputEventScreenTouch:
-		_move_preview(event.position.x)
+		_move_preview(_to_gameplay_x(event.position.x))
 		if not event.pressed:
 			_drop()
 	elif event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
-		_move_preview(event.position.x)
+		_move_preview(_to_gameplay_x(event.position.x))
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_move_preview(event.position.x)
+		_move_preview(_to_gameplay_x(event.position.x))
 		if not event.pressed:
 			_drop()
+
+
+## Touch/mouse positions arrive in real viewport pixels; gameplay
+## coordinates (LEFT_X..RIGHT_X) are in GameplayRoot's fixed design
+## space, so convert before using them.
+func _to_gameplay_x(viewport_x: float) -> float:
+	return gameplay_root.to_local(Vector2(viewport_x, 0)).x
 
 
 func _move_preview(x: float) -> void:
@@ -128,14 +158,14 @@ func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> v
 
 func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:
 	var popup := FLOATING_SCORE_SCENE.instantiate()
-	add_child(popup)
+	gameplay_root.add_child(popup)
 	popup.global_position = global_pos + Vector2(0, -20)
 	popup.text = "+%d" % amount
 
 
 func _spawn_merge_particles(global_pos: Vector2, index: int) -> void:
 	var particles := CPUParticles2D.new()
-	add_child(particles)
+	gameplay_root.add_child(particles)
 	particles.global_position = global_pos
 	particles.one_shot = true
 	particles.emitting = false

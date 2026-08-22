@@ -9,9 +9,15 @@ signal score_changed(new_score: int)
 signal game_over
 signal continued
 
-const DANGER_LINE_Y := 220.0
 const GAME_OVER_DELAY := 3.0
 const SAVE_PATH := "user://highscore.json"
+
+## Global Y (real screen/world coordinates, NOT design coordinates) above
+## which an item is "above the danger line". Main.gd computes this every
+## time it fits the gameplay layout to the actual viewport, since it
+## depends on the current screen size -- the value here is just a sane
+## default before that first runs.
+var danger_line_y: float = 220.0
 
 var score: int = 0
 var high_score: int = 0

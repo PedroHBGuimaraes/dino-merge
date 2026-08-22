@@ -85,8 +85,12 @@ func _physics_process(delta: float) -> void:
 	if GameManager.is_game_over or _merging:
 		return
 	var radius := DinoChain.get_level(level_index).radius
-	var top_y := global_position.y - radius
-	if top_y < GameManager.DANGER_LINE_Y and linear_velocity.length() < SETTLE_SPEED:
+	# lvl.radius is in GameplayRoot's fixed design space; convert to real
+	# global pixels via the node's cumulative scale before comparing
+	# against danger_line_y, which is already a global-space value.
+	var global_radius := radius * get_global_transform().get_scale().x
+	var top_y := global_position.y - global_radius
+	if top_y < GameManager.danger_line_y and linear_velocity.length() < SETTLE_SPEED:
 		_over_line_time += delta
 		if _over_line_time >= GameManager.GAME_OVER_DELAY:
 			GameManager.trigger_game_over()

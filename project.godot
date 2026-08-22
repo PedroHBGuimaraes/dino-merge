@@ -11,15 +11,20 @@ config_version=5
 [application]
 
 config/name="dino-merge"
-run/main_scene="res://scenes/Main.tscn"
+run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://assets/app_icon/app_icon.png"
+
+[audio]
+
+buses/default_bus_layout="res://default_bus_layout.tres"
 
 [autoload]
 
 GameManager="*res://scripts/game_manager.gd"
 DinoChain="*res://scripts/dino_chain.gd"
 AdsManager="*res://scenes/AdsManager.tscn"
+SceneTransition="*res://scenes/SceneTransition.tscn"
 
 [display]
 

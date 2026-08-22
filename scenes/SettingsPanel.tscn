@@ -1,0 +1,78 @@
+[gd_scene load_steps=4 format=3 uid="uid://csettings0panel"]
+
+[ext_resource type="Script" path="res://scripts/settings_panel.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_sound_on.png" id="2"]
+
+[node name="SettingsPanel" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("1")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.88)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+text = "Configurações"
+
+[node name="MusicRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/MusicRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 22
+text = "Música"
+
+[node name="Toggle" type="TextureButton" parent="CenterContainer/VBoxContainer/MusicRow"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+texture_normal = ExtResource("2")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="SfxRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/SfxRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 22
+text = "Efeitos"
+
+[node name="Toggle" type="TextureButton" parent="CenterContainer/VBoxContainer/SfxRow"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+texture_normal = ExtResource("2")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Voltar"

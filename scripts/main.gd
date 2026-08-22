@@ -33,6 +33,17 @@ var preview_x: float = 360.0
 @onready var score_label: Label = $UI/ScoreRow/ScoreLabel
 @onready var next_label: Label = $UI/NextLabel
 @onready var sound_toggle_btn: TextureButton = $UI/SoundToggleButton
+@onready var pause_button: TextureButton = $UI/PauseButton
+@onready var pause_panel: Control = $UI/PausePanel
+@onready var pause_main_buttons: VBoxContainer = $UI/PausePanel/CenterContainer/MainButtons
+@onready var pause_resume_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/ResumeButton
+@onready var pause_restart_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/RestartButton
+@onready var pause_settings_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/SettingsButton
+@onready var pause_menu_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/MenuButton
+@onready var confirm_restart_panel: Control = $UI/PausePanel/ConfirmPanel
+@onready var confirm_restart_yes_btn: Button = $UI/PausePanel/ConfirmPanel/Center/Box/YesButton
+@onready var confirm_cancel_btn: Button = $UI/PausePanel/ConfirmPanel/Center/Box/CancelButton
+@onready var pause_settings_panel: Control = $UI/PausePanel/SettingsPanel
 @onready var game_over_panel: Control = $UI/GameOverPanel
 @onready var game_over_vbox: VBoxContainer = $UI/GameOverPanel/CenterContainer/VBoxContainer
 @onready
@@ -58,10 +69,21 @@ func _ready() -> void:
 	restart_button.pressed.connect(_on_restart_pressed)
 	continue_btn.pressed.connect(_on_continue_pressed)
 	sound_toggle_btn.pressed.connect(_on_sound_toggle_pressed)
+	pause_button.pressed.connect(_on_pause_pressed)
+	pause_resume_btn.pressed.connect(_on_pause_resume_pressed)
+	pause_restart_btn.pressed.connect(_on_pause_restart_pressed)
+	pause_settings_btn.pressed.connect(_on_pause_settings_pressed)
+	pause_menu_btn.pressed.connect(_on_pause_menu_pressed)
+	confirm_restart_yes_btn.pressed.connect(_on_confirm_restart_yes)
+	confirm_cancel_btn.pressed.connect(_on_confirm_restart_cancel)
+	pause_settings_panel.closed.connect(_on_pause_settings_closed)
 	_update_sound_icon()
 	music.finished.connect(func(): music.play())
 	randomize()
 	game_over_panel.visible = false
+	pause_panel.visible = false
+	confirm_restart_panel.visible = false
+	pause_settings_panel.visible = false
 	next_level_index = _random_spawn_level()
 	_update_preview()
 
@@ -84,6 +106,10 @@ func _random_spawn_level() -> int:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_handle_back_button()
+		get_viewport().set_input_as_handled()
+		return
 	if GameManager.is_game_over:
 		return
 	if event is InputEventScreenDrag:
@@ -212,6 +238,80 @@ func _update_sound_icon() -> void:
 	sound_toggle_btn.texture_normal = SOUND_OFF_ICON if muted else SOUND_ON_ICON
 
 
+## One dispatch point for the Android back button / desktop Escape
+## (both map to the built-in "ui_cancel" action), rather than every
+## overlay listening for it independently -- keeps the priority between
+## nested overlays explicit instead of depending on input propagation
+## order between sibling Controls.
+func _handle_back_button() -> void:
+	if pause_settings_panel.visible:
+		pause_settings_panel.close()
+		return
+	if confirm_restart_panel.visible:
+		_on_confirm_restart_cancel()
+		return
+	if pause_panel.visible:
+		_on_pause_resume_pressed()
+		return
+	if GameManager.is_game_over:
+		return
+	_on_pause_pressed()
+
+
+func _on_pause_pressed() -> void:
+	if GameManager.is_game_over or pause_panel.visible:
+		return
+	ui_click_sfx.play()
+	get_tree().paused = true
+	pause_main_buttons.visible = true
+	confirm_restart_panel.visible = false
+	pause_settings_panel.visible = false
+	pause_panel.visible = true
+
+
+func _on_pause_resume_pressed() -> void:
+	ui_click_sfx.play()
+	get_tree().paused = false
+	pause_panel.visible = false
+
+
+func _on_pause_restart_pressed() -> void:
+	ui_click_sfx.play()
+	pause_main_buttons.visible = false
+	confirm_restart_panel.visible = true
+
+
+func _on_confirm_restart_cancel() -> void:
+	ui_click_sfx.play()
+	confirm_restart_panel.visible = false
+	pause_main_buttons.visible = true
+
+
+func _on_confirm_restart_yes() -> void:
+	ui_click_sfx.play()
+	pause_panel.visible = false
+	get_tree().paused = false
+	AdsManager.register_game_over_and_continue(func(): get_tree().reload_current_scene())
+
+
+func _on_pause_settings_pressed() -> void:
+	ui_click_sfx.play()
+	pause_main_buttons.visible = false
+	pause_settings_panel.open()
+
+
+func _on_pause_settings_closed() -> void:
+	pause_main_buttons.visible = true
+
+
+func _on_pause_menu_pressed() -> void:
+	ui_click_sfx.play()
+	get_tree().paused = false
+	AdsManager.register_game_over_and_continue(
+		func(): SceneTransition.change_scene("res://scenes/MainMenu.tscn")
+	)
+
+
 func _on_score_changed(new_score: int) -> void:
 	score_label.text = "Pontos: %d" % new_score
 
@@ -223,6 +323,7 @@ func _on_game_over() -> void:
 	continue_btn.visible = AdsManager.is_rewarded_ad_ready()
 	continue_btn.disabled = false
 	restart_button.disabled = false
+	pause_button.visible = false
 
 	if GameManager.is_new_record:
 		record_sfx.play()
@@ -262,6 +363,7 @@ func _on_rewarded_continue_result(earned: bool) -> void:
 	_clear_top_dinos_for_continue()
 	GameManager.continue_run()
 	game_over_panel.visible = false
+	pause_button.visible = true
 	can_drop = true
 	next_level_index = _random_spawn_level()
 	_update_preview()

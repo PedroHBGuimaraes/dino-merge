@@ -1,0 +1,108 @@
+[gd_scene load_steps=9 format=3 uid="uid://cmainmenu0scene"]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/scenes/bg_crater.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/app_icon/app_icon.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_trophy.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_play.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_gear.png" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/click.wav" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/SettingsPanel.tscn" id="8"]
+
+[node name="MainMenu" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Background" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Dim" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.35)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="AppIconDisplay" type="TextureRect" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(180, 180)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+text = "DINO MERGE"
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+theme_override_colors/font_color = Color(0.86, 0.76, 0.6, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+text = "Cânion dos Fósseis"
+
+[node name="HighScoreRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="CenterContainer/VBoxContainer/HighScoreRow"]
+custom_minimum_size = Vector2(26, 26)
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HighScoreLabel" type="Label" parent="CenterContainer/VBoxContainer/HighScoreRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 22
+text = "Recorde: 0"
+
+[node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(240, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 22
+icon = ExtResource("5")
+expand_icon = true
+theme_override_constants/icon_max_width = 30
+text = "Jogar"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+icon = ExtResource("6")
+expand_icon = true
+theme_override_constants/icon_max_width = 32
+
+[node name="UiClickSfx" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7")
+bus = &"SFX"
+
+[node name="SettingsPanel" parent="." instance=ExtResource("8")]
+visible = false

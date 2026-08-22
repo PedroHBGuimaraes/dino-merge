@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://bqmerge0main"]
+[gd_scene load_steps=21 format=3 uid="uid://bqmerge0main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/spawner_preview.gd" id="2"]
@@ -15,6 +15,10 @@
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_restart.png" id="10"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_sound_on.png" id="11"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_sound_off.png" id="12"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_pause.png" id="16"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_home.png" id="17"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_gear.png" id="18"]
+[ext_resource type="PackedScene" path="res://scenes/SettingsPanel.tscn" id="19"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(20, 1140)
@@ -123,22 +127,28 @@ script = ExtResource("2")
 
 [node name="DropSfx" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("4")
+bus = &"SFX"
 
 [node name="MergeSfx" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("5")
+bus = &"SFX"
 
 [node name="Music" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6")
 autoplay = true
+bus = &"Music"
 
 [node name="GameOverSfx" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("13")
+bus = &"SFX"
 
 [node name="RecordSfx" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("14")
+bus = &"SFX"
 
 [node name="UiClickSfx" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15")
+bus = &"SFX"
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -180,6 +190,17 @@ offset_top = 16.0
 offset_right = -16.0
 offset_bottom = 56.0
 texture_normal = ExtResource("11")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="PauseButton" type="TextureButton" parent="UI"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -104.0
+offset_top = 16.0
+offset_right = -64.0
+offset_bottom = 56.0
+texture_normal = ExtResource("16")
 ignore_texture_size = true
 stretch_mode = 4
 
@@ -258,3 +279,103 @@ icon = ExtResource("10")
 expand_icon = true
 theme_override_constants/icon_max_width = 28
 text = "Jogar novamente"
+
+[node name="PausePanel" type="Control" parent="UI"]
+visible = false
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+
+[node name="Overlay" type="ColorRect" parent="UI/PausePanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.82)
+
+[node name="CenterContainer" type="CenterContainer" parent="UI/PausePanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="MainButtons" type="VBoxContainer" parent="UI/PausePanel/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons"]
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+text = "Pausado"
+
+[node name="ResumeButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+custom_minimum_size = Vector2(240, 56)
+icon = ExtResource("5")
+expand_icon = true
+theme_override_constants/icon_max_width = 28
+text = "Continuar"
+
+[node name="RestartButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+custom_minimum_size = Vector2(240, 56)
+icon = ExtResource("10")
+expand_icon = true
+theme_override_constants/icon_max_width = 28
+text = "Reiniciar"
+
+[node name="SettingsButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+custom_minimum_size = Vector2(240, 56)
+icon = ExtResource("18")
+expand_icon = true
+theme_override_constants/icon_max_width = 28
+text = "Configurações"
+
+[node name="MenuButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+custom_minimum_size = Vector2(240, 56)
+icon = ExtResource("17")
+expand_icon = true
+theme_override_constants/icon_max_width = 28
+text = "Voltar ao menu"
+
+[node name="ConfirmPanel" type="Control" parent="UI/PausePanel"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+
+[node name="Overlay" type="ColorRect" parent="UI/PausePanel/ConfirmPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.6)
+
+[node name="Center" type="CenterContainer" parent="UI/PausePanel/ConfirmPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Box" type="VBoxContainer" parent="UI/PausePanel/ConfirmPanel/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Label" type="Label" parent="UI/PausePanel/ConfirmPanel/Center/Box"]
+custom_minimum_size = Vector2(280, 0)
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Tem certeza? Isso vai encerrar a partida atual."
+
+[node name="YesButton" type="Button" parent="UI/PausePanel/ConfirmPanel/Center/Box"]
+custom_minimum_size = Vector2(240, 56)
+text = "Sim, reiniciar"
+
+[node name="CancelButton" type="Button" parent="UI/PausePanel/ConfirmPanel/Center/Box"]
+custom_minimum_size = Vector2(240, 56)
+text = "Cancelar"
+
+[node name="SettingsPanel" parent="UI/PausePanel" instance=ExtResource("19")]
+visible = false

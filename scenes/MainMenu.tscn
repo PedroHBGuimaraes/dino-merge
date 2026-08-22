@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://cmainmenu0scene"]
+[gd_scene load_steps=11 format=3 uid="uid://cmainmenu0scene"]
 
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/scenes/bg_crater.png" id="2"]
@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_gear.png" id="6"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/click.wav" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/SettingsPanel.tscn" id="8"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_achievements.png" id="9"]
+[ext_resource type="Script" path="res://scripts/achievements_screen.gd" id="10"]
 
 [node name="MainMenu" type="Control"]
 anchors_preset = 15
@@ -92,10 +94,22 @@ expand_icon = true
 theme_override_constants/icon_max_width = 30
 text = "Jogar"
 
-[node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(64, 64)
+[node name="ButtonRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="AchievementsButton" type="Button" parent="CenterContainer/VBoxContainer/ButtonRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+icon = ExtResource("9")
+expand_icon = true
+theme_override_constants/icon_max_width = 32
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer/ButtonRow"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
 icon = ExtResource("6")
 expand_icon = true
 theme_override_constants/icon_max_width = 32
@@ -106,3 +120,52 @@ bus = &"SFX"
 
 [node name="SettingsPanel" parent="." instance=ExtResource("8")]
 visible = false
+
+[node name="AchievementsScreen" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("10")
+visible = false
+
+[node name="Overlay" type="ColorRect" parent="AchievementsScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.92)
+
+[node name="Margin" type="MarginContainer" parent="AchievementsScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 56
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="AchievementsScreen/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="AchievementsScreen/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+text = "Conquistas"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="AchievementsScreen/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="List" type="VBoxContainer" parent="AchievementsScreen/Margin/VBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="BackButton" type="Button" parent="AchievementsScreen/Margin/VBox"]
+custom_minimum_size = Vector2(200, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Voltar"

@@ -27,6 +27,7 @@ buses/default_bus_layout="res://default_bus_layout.tres"
 
 GameManager="*res://scripts/game_manager.gd"
 DinoChain="*res://scripts/dino_chain.gd"
+Achievements="*res://scripts/achievements.gd"
 AdsManager="*res://scenes/AdsManager.tscn"
 SceneTransition="*res://scenes/SceneTransition.tscn"
 

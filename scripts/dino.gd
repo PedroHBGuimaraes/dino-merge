@@ -180,6 +180,7 @@ func _do_merge(other: RigidBody2D) -> void:
 	var lvl := DinoChain.get_level(level_index)
 	var next_index := level_index + 1
 	GameManager.add_score(lvl.score_value)
+	GameManager.register_merge(next_index)
 
 	var main := get_tree().current_scene
 	main.spawn_merge_flash(mid)

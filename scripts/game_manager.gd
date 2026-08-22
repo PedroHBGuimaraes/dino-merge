@@ -9,6 +9,7 @@ extends Node
 signal score_changed(new_score: int)
 signal game_over
 signal continued
+signal achievement_unlocked(id: String)
 
 const GAME_OVER_DELAY := 3.0
 const SAVE_PATH := "user://highscore.json"
@@ -25,6 +26,9 @@ var high_score: int = 0
 var is_new_record: bool = false
 var is_game_over: bool = false
 var has_seen_tutorial: bool = false
+var games_played: int = 0
+var total_merges: int = 0
+var unlocked_achievements: Dictionary = {}
 
 
 func _ready() -> void:
@@ -36,6 +40,9 @@ func add_score(points: int) -> void:
 		return
 	score += points
 	score_changed.emit(score)
+	for threshold in Achievements.SCORE_THRESHOLDS:
+		if score >= threshold:
+			_unlock("score_%d" % threshold)
 
 
 func trigger_game_over() -> void:
@@ -73,6 +80,47 @@ func mark_tutorial_seen() -> void:
 	_save_progress()
 
 
+## Called once per distinct match (fresh load or restart of Main.tscn --
+## NOT a rewarded-ad continue, which reuses the same run/scene).
+func register_game_started() -> void:
+	games_played += 1
+	for threshold in Achievements.GAMES_THRESHOLDS:
+		if games_played >= threshold:
+			_unlock("games_%d" % threshold)
+	_save_progress()
+
+
+## Called from dino.gd right as a merge produces `new_level_index`,
+## regardless of whether that index is still within the chain (two
+## Mosasaurus merging have nothing new to spawn, but it still counts
+## as a merge for the lifetime-count achievements).
+func register_merge(new_level_index: int) -> void:
+	total_merges += 1
+	if total_merges == 1:
+		_unlock("first_merge")
+	if total_merges >= Achievements.MERGES_THRESHOLD:
+		_unlock("merges_100")
+	if new_level_index == Achievements.TRICERATOPS_LEVEL:
+		_unlock("triceratops")
+	elif new_level_index == Achievements.TREX_LEVEL:
+		_unlock("trex")
+	elif new_level_index == DinoChain.level_count() - 1:
+		_unlock("legendary")
+	_save_progress()
+
+
+func is_unlocked(id: String) -> bool:
+	return unlocked_achievements.has(id)
+
+
+func _unlock(id: String) -> void:
+	if unlocked_achievements.has(id):
+		return
+	unlocked_achievements[id] = true
+	achievement_unlocked.emit(id)
+	_save_progress()
+
+
 func _load_progress() -> void:
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
@@ -87,6 +135,13 @@ func _load_progress() -> void:
 		high_score = int(data["high_score"])
 	if data.has("seen_tutorial"):
 		has_seen_tutorial = bool(data["seen_tutorial"])
+	if data.has("games_played"):
+		games_played = int(data["games_played"])
+	if data.has("total_merges"):
+		total_merges = int(data["total_merges"])
+	if data.has("unlocked_achievements") and typeof(data["unlocked_achievements"]) == TYPE_ARRAY:
+		for id in data["unlocked_achievements"]:
+			unlocked_achievements[str(id)] = true
 
 
 func _save_progress() -> void:
@@ -94,7 +149,12 @@ func _save_progress() -> void:
 	if file == null:
 		push_warning("GameManager: could not open %s for writing" % SAVE_PATH)
 		return
-	file.store_string(
-		JSON.stringify({"high_score": high_score, "seen_tutorial": has_seen_tutorial})
-	)
+	var data := {
+		"high_score": high_score,
+		"seen_tutorial": has_seen_tutorial,
+		"games_played": games_played,
+		"total_merges": total_merges,
+		"unlocked_achievements": unlocked_achievements.keys(),
+	}
+	file.store_string(JSON.stringify(data))
 	file.close()

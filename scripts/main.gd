@@ -69,6 +69,7 @@ var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScor
 func _ready() -> void:
 	_fit_gameplay_to_viewport()
 	GameManager.reset()
+	GameManager.register_game_started()
 	GameManager.score_changed.connect(_on_score_changed)
 	GameManager.game_over.connect(_on_game_over)
 	restart_button.pressed.connect(_on_restart_pressed)

@@ -8,6 +8,10 @@ extends Resource
 @export var color: Color = Color.WHITE
 @export var texture: Texture2D
 @export var score_value: int = 10
+## Idle-breathing animation frames (frame 0 == `texture`, then 1+ generated
+## via PixelLab's animate_image). Empty when this species has no idle
+## animation yet -- dino.gd falls back to the static `texture` in that case.
+@export var idle_frames: Array[Texture2D] = []
 ## Longest side (px) of the sprite's actual non-transparent content,
 ## not the raw canvas size. Sprites share a 64x64 canvas but differ a
 ## lot in how much of it they fill, so scaling by canvas size alone

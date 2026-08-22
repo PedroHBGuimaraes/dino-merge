@@ -104,6 +104,7 @@ func _ready() -> void:
 		lvl.color = Color.from_hsv(float(i) / SPECIES.size(), 0.65, 0.9)
 		lvl.texture = _try_load_texture(species_id)
 		lvl.content_size = CONTENT_SIZE.get(species_id, 64.0)
+		lvl.idle_frames = _try_load_idle_frames(species_id)
 		levels.append(lvl)
 
 
@@ -112,6 +113,22 @@ func _try_load_texture(species_id: String) -> Texture2D:
 	if not ResourceLoader.exists(path):
 		return null
 	return load(path) as Texture2D
+
+
+## Loads dino_<species>_idle_0..N.png from assets/dino/idle/ in order,
+## stopping at the first missing index. Species with no idle set (not yet
+## generated via PixelLab) simply get an empty array back, and dino.gd
+## falls back to the static texture for those.
+func _try_load_idle_frames(species_id: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var i := 0
+	while true:
+		var path := "%s/idle/dino_%s_idle_%d.png" % [ASSET_DIR, species_id, i]
+		if not ResourceLoader.exists(path):
+			break
+		frames.append(load(path) as Texture2D)
+		i += 1
+	return frames
 
 
 func level_count() -> int:

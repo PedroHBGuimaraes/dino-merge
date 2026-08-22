@@ -5,10 +5,16 @@ extends RigidBody2D
 ## "stuck above the danger line" game-over timer.
 
 const SETTLE_SPEED := 12.0
+## Seconds each idle frame stays on screen -- slow enough to read as a
+## gentle breathing loop rather than a flicker.
+const IDLE_FRAME_DURATION := 0.35
 
 var level_index: int = 0
 var _merging: bool = false
 var _over_line_time: float = 0.0
+var _idle_frames: Array[Texture2D] = []
+var _idle_frame_index: int = 0
+var _idle_elapsed: float = 0.0
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var collision: CollisionShape2D = $CollisionShape2D
@@ -29,6 +35,9 @@ func setup(index: int) -> void:
 		sprite.scale = Vector2(scale_factor, scale_factor)
 	else:
 		sprite.visible = false
+	_idle_frames = lvl.idle_frames
+	_idle_frame_index = 0
+	_idle_elapsed = 0.0
 	queue_redraw()
 
 
@@ -56,6 +65,17 @@ func _ready() -> void:
 	contact_monitor = true
 	max_contacts_reported = 6
 	body_entered.connect(_on_body_entered)
+
+
+func _process(delta: float) -> void:
+	if _merging or _idle_frames.size() <= 1:
+		return
+	_idle_elapsed += delta
+	if _idle_elapsed < IDLE_FRAME_DURATION:
+		return
+	_idle_elapsed -= IDLE_FRAME_DURATION
+	_idle_frame_index = (_idle_frame_index + 1) % _idle_frames.size()
+	sprite.texture = _idle_frames[_idle_frame_index]
 
 
 func _draw() -> void:

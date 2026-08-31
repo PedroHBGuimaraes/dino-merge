@@ -507,12 +507,19 @@ func _screen_shake(strength: float, duration: float) -> void:
 ## very last (highest) level in the chain via a merge. Timed alongside
 ## the screen shake that already fires for this same top tier.
 func _show_legendary_banner() -> void:
+	# A short real-time slow-mo sells "you just did the rarest thing in the
+	# game". The banner tween and the restore timer both ignore time_scale
+	# so they still run at wall-clock speed while everything else crawls.
+	Engine.time_scale = 0.35
+	get_tree().create_timer(0.6, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
+	_spawn_legendary_gold_rain()
+
 	legendary_banner.modulate.a = 0.0
 	legendary_banner.scale = Vector2(0.5, 0.5)
 	legendary_banner.visible = true
 	await get_tree().process_frame
 	legendary_banner.pivot_offset = legendary_banner.size / 2.0
-	var tween := create_tween()
+	var tween := create_tween().set_ignore_time_scale(true)
 	tween.set_parallel(true)
 	tween.tween_property(legendary_banner, "modulate:a", 1.0, 0.2)
 	(
@@ -522,9 +529,36 @@ func _show_legendary_banner() -> void:
 		. set_ease(Tween.EASE_OUT)
 	)
 	tween.set_parallel(false)
-	tween.tween_interval(1.2)
+	tween.tween_interval(1.4)
 	tween.tween_property(legendary_banner, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(func(): legendary_banner.visible = false)
+
+
+## Gold flecks raining down the full screen behind the legendary banner.
+## On the UI CanvasLayer so it's in screen space and unaffected by the
+## gameplay camera.
+func _spawn_legendary_gold_rain() -> void:
+	var vp := get_viewport_rect().size
+	var rain := CPUParticles2D.new()
+	$UI.add_child(rain)
+	rain.position = Vector2(vp.x * 0.5, -20.0)
+	rain.z_index = -1
+	rain.one_shot = true
+	rain.explosiveness = 0.15
+	rain.amount = 90
+	rain.lifetime = 2.2
+	rain.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	rain.emission_rect_extents = Vector2(vp.x * 0.55, 8.0)
+	rain.direction = Vector2.DOWN
+	rain.spread = 12.0
+	rain.gravity = Vector2(0, 420)
+	rain.initial_velocity_min = 60.0
+	rain.initial_velocity_max = 160.0
+	rain.scale_amount_min = 2.0
+	rain.scale_amount_max = 4.0
+	rain.color = Color(1.0, 0.84, 0.35, 1.0)
+	rain.emitting = true
+	get_tree().create_timer(4.0, true, false, true).timeout.connect(rain.queue_free)
 
 
 func _on_sound_toggle_pressed() -> void:
@@ -693,6 +727,25 @@ func _on_game_over() -> void:
 		. set_trans(Tween.TRANS_BACK)
 		. set_ease(Tween.EASE_OUT)
 	)
+	if GameManager.is_new_record:
+		await tween.finished
+		_celebrate_new_record()
+
+
+## Extra beat on the game-over screen when the run beat the best score:
+## the record line punches in and gold flecks rain behind the panel.
+func _celebrate_new_record() -> void:
+	record_label.pivot_offset = record_label.size / 2.0
+	record_label.scale = Vector2(0.4, 0.4)
+	var t := create_tween()
+	(
+		t
+		. tween_property(record_label, "scale", Vector2(1.15, 1.15), 0.22)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
+	t.tween_property(record_label, "scale", Vector2.ONE, 0.12)
+	_spawn_legendary_gold_rain()
 
 
 ## "You reached the {species}" line -- the highest dino a merge produced

@@ -54,6 +54,16 @@ func _run() -> void:
 		await create_timer(0.3).timeout
 		var sp := _node.get_node("UI/SequencePanel")
 		sp._show_detail(14)
+	elif _mode == "legendary":
+		for x in [180.0, 360.0, 300.0, 460.0, 240.0]:
+			_node.preview_x = x
+			_node._move_preview(x)
+			_node.can_drop = true
+			_node._drop()
+			await create_timer(0.4).timeout
+		await create_timer(1.0).timeout
+		_node._show_legendary_banner()
+		await create_timer(0.5).timeout
 	elif _mode == "settings_game":
 		_node._on_pause_pressed()
 		_node._on_pause_settings_pressed()

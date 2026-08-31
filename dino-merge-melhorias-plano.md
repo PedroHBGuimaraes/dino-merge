@@ -42,16 +42,20 @@ Executado na ordem sugerida. Commits em `master`:
 - **J7/C5** (`a021f67`) — criar o Mosasaurus dispara slow-mo de 0.6s +
   chuva de ouro atrás do banner; bater o recorde dá o mesmo tratamento na
   tela de game over.
+- **U4 painéis emoldurados** (`5bdc88b`) — `assets/ui/merge/panel.png`
+  extraído do kit PixelLab, montado como nine-patch (`StyleBoxTexture` em
+  `PanelContainer` no tema). Pause, Configurações, Dinopédia e Conquistas
+  agora são tábuas de pedra fóssil emolduradas.
+- **J3** (`c10077d`) — fusão empurra + dá squash nos dinos vizinhos, a
+  onda passa pela pilha em vez de ser absorvida em silêncio.
 
 ### Ainda pendente
-- **U5** — falta só as setas "→" de progressão entre células.
-- **U4** — painéis nine-patch temáticos (o `create_ui_asset` do PixelLab
-  devolve um kit/spritesheet — precisa extrair 1 peça e definir margens;
-  os overlays já são opacos, o pior já foi resolvido).
-- **J8** cross-fade de fundo (baixo valor agora que o poço é opaco);
-  **J3** squash nos vizinhos empurrados pela fusão.
-- **C3** modos extras (diário / poço estreito / objetivo) — feature grande.
-- HUD: mostrar os 2 próximos dinos, ícone maior.
+- **U5** — setas "→" de progressão entre células da Dinopédia (grade 4-col
+  torna chato; baixo valor).
+- **J8** cross-fade de fundo (baixo valor agora que o poço é opaco).
+- **C3** modos extras (diário / poço estreito / objetivo) — feature grande,
+  decisão de design.
+- HUD: mostrar os 2 próximos dinos (mexe no caminho do rewarded-continue).
 - Fonte pixel só no título (atlas sem acentos — não serve de fonte global
   num jogo em 5 idiomas).
 

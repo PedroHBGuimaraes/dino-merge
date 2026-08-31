@@ -40,9 +40,9 @@ const BG_HIGH := preload("res://assets/scenes/bg_crater_high.png")
 const BG_MID_SCORE := 300
 const BG_HIGH_SCORE := 800
 
-## From this level index up, a merge is rare/special enough to earn a
-## screen shake on top of the usual particles/pop (top ~6 of 32 levels).
-const HIGH_MERGE_SHAKE_LEVEL := 26
+## From this level index up, a merge earns a (proportional) screen shake
+## on top of the usual particles/pop -- roughly the back half of the chain.
+const MID_MERGE_SHAKE_LEVEL := 10
 
 ## The dino currently loaded in the spawner (dragged/dropped on release).
 var current_level_index: int = 0
@@ -275,7 +275,7 @@ func spawn_merged_dino(
 	merge_sfx.volume_db = level_fraction * 4.0
 	merge_sfx.play()
 
-	_spawn_floating_score(global_pos, score_awarded)
+	_spawn_floating_score(global_pos, score_awarded, index)
 	if combo_count >= 2:
 		_spawn_combo_text(global_pos, combo_count)
 	_spawn_merge_particles(global_pos, index)
@@ -287,8 +287,15 @@ func spawn_merged_dino(
 	# more noticeable cue than "just a bigger version of every other one".
 	GameManager.vibrate(int(20 + level_fraction * 60))
 
-	if index >= HIGH_MERGE_SHAKE_LEVEL:
-		_screen_shake(7.0, 0.35)
+	# A merge from the middle of the chain up gets a small, proportional
+	# camera kick -- not just the rare top tiers. Below MID_MERGE_SHAKE_LEVEL
+	# the pop + particles carry it on their own.
+	if index >= MID_MERGE_SHAKE_LEVEL:
+		var s := (
+			float(index - MID_MERGE_SHAKE_LEVEL)
+			/ float(DinoChain.level_count() - 1 - MID_MERGE_SHAKE_LEVEL)
+		)
+		_screen_shake(lerpf(1.5, 8.0, s), lerpf(0.12, 0.36, s))
 	if index == DinoChain.level_count() - 1:
 		GameManager.vibrate(200)
 		_show_legendary_banner()
@@ -422,11 +429,16 @@ func _spawn_shockwave(global_pos: Vector2, index: int) -> void:
 	tween.chain().tween_callback(wave.queue_free)
 
 
-func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:
+func _spawn_floating_score(global_pos: Vector2, amount: int, index: int = 0) -> void:
 	var popup := FLOATING_SCORE_SCENE.instantiate()
 	gameplay_root.add_child(popup)
 	popup.global_position = global_pos + Vector2(0, -20)
 	popup.text = "+%d" % amount
+	# Bigger and warmer (pale gold -> ember) the higher the merged tier, so
+	# a chain-topping merge's score visibly hits harder than an early one.
+	var frac := float(index) / float(DinoChain.level_count() - 1)
+	popup.scale = Vector2.ONE * (1.0 + frac * 0.9)
+	popup.color = Color(1.0, lerpf(0.95, 0.62, frac), lerpf(0.8, 0.2, frac))
 
 
 ## "COMBO xN!" callout for a chained merge (combo_count >= 2), reusing

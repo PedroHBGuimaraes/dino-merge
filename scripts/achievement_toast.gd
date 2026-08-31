@@ -1,13 +1,16 @@
 extends Control
 
-## In-run popup when an achievement unlocks. GameManager.achievement_unlocked
-## fires the moment a threshold is crossed mid-play (add_score / register_merge
-## / register_game_started) but nothing was listening -- the player only found
-## out by opening the menu screen later. This slides a card down from the top
-## edge, holds, slides back, one at a time from a queue.
+## In-run popups: achievement unlocked, and first time a new species is
+## created. Both used to be invisible until you opened a menu. A card
+## slides down from under the HUD, holds, slides back, one at a time from
+## a queue.
 ##
 ## Built entirely in code and dropped in as a single node (same pattern as
 ## FloatingScoreText) -- it has no editable layout worth a .tscn.
+
+## Species below this index come straight out of the spawner every game --
+## only toast the ones you had to merge your way up to.
+const SPECIES_TOAST_MIN_INDEX := 5
 
 const CARD_WIDTH := 300.0
 const CARD_HEIGHT := 64.0
@@ -19,10 +22,13 @@ const HOLD_SECONDS := 2.2
 const SLIDE_IN := 0.35
 const SLIDE_OUT := 0.3
 
-var _queue: Array[String] = []
+## Each entry: {"kind": "achievement"|"species", "icon": Texture2D,
+## "kicker": String, "title": String}.
+var _queue: Array[Dictionary] = []
 var _busy := false
 var _card: Panel
 var _icon: TextureRect
+var _kicker: Label
 var _title: Label
 var _sfx: AudioStreamPlayer
 
@@ -34,10 +40,39 @@ func _ready() -> void:
 	_build()
 	_card.position.y = HIDDEN_Y
 	GameManager.achievement_unlocked.connect(_on_achievement_unlocked)
+	GameManager.species_discovered.connect(_on_species_discovered)
 
 
 func _on_achievement_unlocked(id: String) -> void:
-	_queue.append(id)
+	var achievement := Achievements.get_by_id(id)
+	if achievement == null:
+		return
+	_enqueue(
+		{
+			"kind": "achievement",
+			"icon": achievement.icon,
+			"kicker": tr("ACH_TOAST_UNLOCKED"),
+			"title": tr(achievement.title),
+		}
+	)
+
+
+func _on_species_discovered(index: int) -> void:
+	if index < SPECIES_TOAST_MIN_INDEX:
+		return
+	var lvl := DinoChain.get_level(index)
+	_enqueue(
+		{
+			"kind": "species",
+			"icon": lvl.texture,
+			"kicker": tr("TOAST_NEW_SPECIES"),
+			"title": lvl.dino_name,
+		}
+	)
+
+
+func _enqueue(entry: Dictionary) -> void:
+	_queue.append(entry)
 	if not _busy:
 		_pump()
 
@@ -47,13 +82,10 @@ func _pump() -> void:
 		_busy = false
 		return
 	_busy = true
-	var id: String = _queue.pop_front()
-	var achievement := Achievements.get_by_id(id)
-	if achievement == null:
-		_pump()
-		return
-	_icon.texture = achievement.icon
-	_title.text = tr(achievement.title)
+	var entry: Dictionary = _queue.pop_front()
+	_icon.texture = entry["icon"]
+	_kicker.text = entry["kicker"]
+	_title.text = entry["title"]
 	_card.position.x = (size.x - CARD_WIDTH) * 0.5
 	if _sfx.stream != null:
 		_sfx.play()
@@ -111,11 +143,10 @@ func _build() -> void:
 	text.add_theme_constant_override("separation", 1)
 	row.add_child(text)
 
-	var kicker := Label.new()
-	kicker.text = tr("ACH_TOAST_UNLOCKED")
-	kicker.add_theme_font_size_override("font_size", 12)
-	kicker.add_theme_color_override("font_color", Color(1.0, 0.78, 0.35, 1.0))
-	text.add_child(kicker)
+	_kicker = Label.new()
+	_kicker.add_theme_font_size_override("font_size", 12)
+	_kicker.add_theme_color_override("font_color", Color(1.0, 0.78, 0.35, 1.0))
+	text.add_child(_kicker)
 
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", 18)

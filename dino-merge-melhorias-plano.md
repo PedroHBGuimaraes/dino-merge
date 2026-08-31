@@ -28,11 +28,26 @@ Executado na ordem sugerida. Commits em `master`:
 - **Identidade** (`c2c3811`) — emblema (crânio de T-rex + ossos, PixelLab)
   no menu no lugar do app_icon; fonte pixel `DinoMerge.ttf` no título;
   game over com botão "Menu" e linha "Você chegou ao {espécie}".
+- **P2 juice** (`5934c20` + `1a08c13`) — shockwave em cada fusão; preview
+  do próximo dino respira + pop ao carregar; screen shake graduado a
+  partir do nível 10 (era só ≥26); "+score" flutuante cresce/esquenta por
+  tier.
+- **P3/P4** — U6 configurações reais (sliders de volume, toggle de
+  vibração via `GameManager.vibrate()`, apagar progresso com confirmação);
+  U9 glow dos botões calibrado; C2 toast "Nova espécie!" na 1ª fusão de
+  cada nível ≥5.
 
-Pendente da lista abaixo: `~` = parcial, resto não iniciado.
-- U5 Dinopédia: silhuetas ✓, **falta** setas de progressão e fatos por espécie.
-- Fonte pixel: só no título (atlas sem acentos — não serve de fonte global).
-- Toda a P2 (juice), resto de P3, e P4.
+### Ainda pendente
+- **U5** — Dinopédia: falta setas de progressão "→" e **fatos por espécie**
+  (32 × 5 idiomas — tarefa de conteúdo, não iniciada).
+- **U4** — painéis nine-patch temáticos (asset gerado no PixelLab veio
+  como kit/spritesheet — precisa extrair 1 peça e definir margens).
+- **J7** banner "Lendário!" com arte + slow-mo; **J8** cross-fade de fundo;
+  **J3** squash nos vizinhos empurrados.
+- **C1** Dinopédia com fatos (= U5); **C3** modos extras; **C5** tela de
+  novo recorde dedicada.
+- Fonte pixel só no título (atlas sem acentos — não serve de fonte global
+  num jogo em 5 idiomas).
 
 ---
 

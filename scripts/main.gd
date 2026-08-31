@@ -62,6 +62,9 @@ var _bg_tier: int = 0
 ## have equally broken the walls'/floor's collision-vs-visual
 ## alignment) while GameplayRoot itself carried that scale instead.
 var _game_scale: float = 1.0
+var _shake_strength := 0.0
+var _shake_until := 0.0
+var _shaking := false
 
 @onready var camera: Camera2D = $Camera2D
 @onready var background: TextureRect = $BackgroundLayer/Background
@@ -416,13 +419,24 @@ func _spawn_merge_particles(global_pos: Vector2, index: int) -> void:
 	particles.queue_free()
 
 
+## Overlapping shakes (two top-tier merges within ~0.35s) share one loop:
+## each call bumps the active strength/deadline, and only the last loop
+## still running snaps the camera back to rest -- so a second shake can't
+## leave the camera parked at a random jittered offset.
 func _screen_shake(strength: float, duration: float) -> void:
-	var elapsed := 0.0
-	while elapsed < duration:
-		camera.offset = Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
+	_shake_strength = maxf(_shake_strength, strength)
+	_shake_until = maxf(_shake_until, float(Time.get_ticks_msec()) / 1000.0 + duration)
+	if _shaking:
+		return
+	_shaking = true
+	while float(Time.get_ticks_msec()) / 1000.0 < _shake_until:
+		var s := _shake_strength
+		camera.offset = Vector2(randf_range(-s, s), randf_range(-s, s))
 		await get_tree().create_timer(0.02).timeout
-		elapsed += 0.02
+		_shake_strength = maxf(0.0, _shake_strength - strength * 0.02 / maxf(duration, 0.01))
 	camera.offset = Vector2.ZERO
+	_shake_strength = 0.0
+	_shaking = false
 
 
 ## Big transient banner for the rarest possible event: creating the
@@ -451,15 +465,12 @@ func _show_legendary_banner() -> void:
 
 func _on_sound_toggle_pressed() -> void:
 	ui_click_sfx.play()
-	var master_bus := AudioServer.get_bus_index("Master")
-	AudioServer.set_bus_mute(master_bus, not AudioServer.is_bus_mute(master_bus))
+	GameManager.set_master_muted(not GameManager.master_muted)
 	_update_sound_icon()
 
 
 func _update_sound_icon() -> void:
-	var master_bus := AudioServer.get_bus_index("Master")
-	var muted := AudioServer.is_bus_mute(master_bus)
-	sound_toggle_btn.texture_normal = SOUND_OFF_ICON if muted else SOUND_ON_ICON
+	sound_toggle_btn.texture_normal = SOUND_OFF_ICON if GameManager.master_muted else SOUND_ON_ICON
 
 
 ## One dispatch point for the Android back button / desktop Escape

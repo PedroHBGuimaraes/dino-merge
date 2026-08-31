@@ -27,7 +27,12 @@ const SAVE_PATH := "user://highscore.json"
 ## a shared timer since the last merge is the robust signal here. A
 ## merge within COMBO_WINDOW seconds of the previous one extends the
 ## chain; a gap resets it to a fresh combo of 1 (i.e. no bonus).
-const COMBO_WINDOW := 1.5
+## Kept tight on purpose: a settling pile keeps nudging pairs together
+## for a second or more after the player's last drop, and a wide window
+## turned those physics after-shocks into free combo multipliers -- the
+## same 18 drops could score 230 or 1140 purely on how the stack
+## resettled. 0.7s still rewards a genuine drop-triggered cascade.
+const COMBO_WINDOW := 0.7
 ## +0.5x per chained merge, capped at 3x (combo 5+) so a long lucky
 ## cascade can't runaway the score indefinitely.
 const COMBO_MULTIPLIER_STEP := 0.5
@@ -49,6 +54,15 @@ var games_played: int = 0
 var total_merges: int = 0
 var unlocked_achievements: Dictionary = {}
 
+## Audio mute state, persisted to the save so a muted game stays muted
+## across restarts (Godot does not persist AudioServer bus mutes itself).
+## `master_muted` is the HUD quick-mute (mutes everything); music/sfx are
+## the per-category toggles in SettingsPanel. Applied to the buses on boot
+## by _apply_audio_settings().
+var master_muted: bool = false
+var music_muted: bool = false
+var sfx_muted: bool = false
+
 ## How many merges deep the current chain combo is (1 = a lone merge,
 ## no bonus). Read by main.gd right after register_combo_step() to
 ## decide whether/how to show combo feedback.
@@ -60,6 +74,33 @@ var _last_merge_ms: int = -1000000000
 
 func _ready() -> void:
 	_load_progress()
+	_apply_audio_settings()
+
+
+## Pushes the persisted mute flags onto the actual audio buses. Called once
+## on boot; the setters below keep the buses in sync after that.
+func _apply_audio_settings() -> void:
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), master_muted)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), music_muted)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), sfx_muted)
+
+
+func set_master_muted(value: bool) -> void:
+	master_muted = value
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), value)
+	_save_progress()
+
+
+func set_music_muted(value: bool) -> void:
+	music_muted = value
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), value)
+	_save_progress()
+
+
+func set_sfx_muted(value: bool) -> void:
+	sfx_muted = value
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), value)
+	_save_progress()
 
 
 func add_score(points: int) -> void:
@@ -190,6 +231,12 @@ func _load_progress() -> void:
 			games_played = int(data["games_played"])
 		if data.has("total_merges"):
 			total_merges = int(data["total_merges"])
+		if data.has("master_muted"):
+			master_muted = bool(data["master_muted"])
+		if data.has("music_muted"):
+			music_muted = bool(data["music_muted"])
+		if data.has("sfx_muted"):
+			sfx_muted = bool(data["sfx_muted"])
 		if (
 			data.has("unlocked_achievements")
 			and typeof(data["unlocked_achievements"]) == TYPE_ARRAY
@@ -213,6 +260,9 @@ func _save_progress() -> void:
 		"total_merges": total_merges,
 		"unlocked_achievements": unlocked_achievements.keys(),
 		"language": LocaleManager.language,
+		"master_muted": master_muted,
+		"music_muted": music_muted,
+		"sfx_muted": sfx_muted,
 	}
 	file.store_string(JSON.stringify(data))
 	file.close()

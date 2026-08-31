@@ -89,6 +89,13 @@ func _ready() -> void:
 		list.append(a)
 
 
+func get_by_id(id: String) -> Achievement:
+	for a in list:
+		if a.id == id:
+			return a
+	return null
+
+
 func _try_load_icon(id: String) -> Texture2D:
 	var path := "%s/ach_%s.png" % [ASSET_DIR, id]
 	if not ResourceLoader.exists(path):

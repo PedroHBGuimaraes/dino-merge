@@ -54,6 +54,10 @@ func _run() -> void:
 		_node.get_node("AchievementsScreen").open()
 	elif _mode == "settings_menu":
 		_node.get_node("SettingsPanel").open()
+	elif _mode == "toast":
+		await create_timer(0.4).timeout
+		root.get_node("/root/GameManager").achievement_unlocked.emit("first_merge")
+		await create_timer(0.6).timeout
 	await create_timer(_warmup).timeout
 	var img := root.get_texture().get_image()
 	img.save_png(_out)

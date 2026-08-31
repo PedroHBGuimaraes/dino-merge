@@ -60,14 +60,12 @@ func _on_language_selected(index: int) -> void:
 
 
 func _on_music_toggle_pressed() -> void:
-	var bus := AudioServer.get_bus_index("Music")
-	AudioServer.set_bus_mute(bus, not AudioServer.is_bus_mute(bus))
+	GameManager.set_music_muted(not GameManager.music_muted)
 	_refresh_icons()
 
 
 func _on_sfx_toggle_pressed() -> void:
-	var bus := AudioServer.get_bus_index("SFX")
-	AudioServer.set_bus_mute(bus, not AudioServer.is_bus_mute(bus))
+	GameManager.set_sfx_muted(not GameManager.sfx_muted)
 	_refresh_icons()
 
 
@@ -76,11 +74,5 @@ func _on_back_pressed() -> void:
 
 
 func _refresh_icons() -> void:
-	var music_bus := AudioServer.get_bus_index("Music")
-	var sfx_bus := AudioServer.get_bus_index("SFX")
-	music_toggle_btn.texture_normal = (
-		SOUND_OFF_ICON if AudioServer.is_bus_mute(music_bus) else SOUND_ON_ICON
-	)
-	sfx_toggle_btn.texture_normal = (
-		SOUND_OFF_ICON if AudioServer.is_bus_mute(sfx_bus) else SOUND_ON_ICON
-	)
+	music_toggle_btn.texture_normal = SOUND_OFF_ICON if GameManager.music_muted else SOUND_ON_ICON
+	sfx_toggle_btn.texture_normal = SOUND_OFF_ICON if GameManager.sfx_muted else SOUND_ON_ICON

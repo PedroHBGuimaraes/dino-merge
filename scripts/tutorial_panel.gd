@@ -30,6 +30,10 @@ func _on_next_pressed() -> void:
 	if _step == 0:
 		_step = 1
 		_refresh_step()
+		# Persist "seen" as soon as the player moves past the first step, so
+		# quitting the app mid-tutorial doesn't replay it from the top next
+		# launch (dismiss() also marks it, for the skip/finish paths).
+		GameManager.mark_tutorial_seen()
 	else:
 		dismiss()
 

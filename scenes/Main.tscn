@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://bqmerge0main"]
+[gd_scene load_steps=27 format=3 uid="uid://bqmerge0main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/spawner_preview.gd" id="2"]
@@ -29,6 +29,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/merge/glow_dot.png" id="27"]
 [ext_resource type="Script" path="res://scripts/icon_glow.gd" id="28"]
 [ext_resource type="Script" path="res://scripts/parallax_sky.gd" id="29"]
+[ext_resource type="Script" path="res://scripts/achievement_toast.gd" id="30"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(20, 1140)
@@ -743,3 +744,10 @@ custom_minimum_size = Vector2(200, 52)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "COMMON_CLOSE"
+
+[node name="AchievementToast" type="Control" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("30")

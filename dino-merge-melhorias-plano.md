@@ -36,16 +36,22 @@ Executado na ordem sugerida. Commits em `master`:
   vibração via `GameManager.vibrate()`, apagar progresso com confirmação);
   U9 glow dos botões calibrado; C2 toast "Nova espécie!" na 1ª fusão de
   cada nível ≥5.
+- **U5/C1 Dinopédia** (`5d9c761`) — tocar um dino descoberto abre um card
+  com sprite grande, "#N/32 Nome" e um **fato paleontológico** (32 fatos
+  × 5 idiomas). Não descobertos ficam silhueta e não clicáveis.
+- **J7/C5** (`a021f67`) — criar o Mosasaurus dispara slow-mo de 0.6s +
+  chuva de ouro atrás do banner; bater o recorde dá o mesmo tratamento na
+  tela de game over.
 
 ### Ainda pendente
-- **U5** — Dinopédia: falta setas de progressão "→" e **fatos por espécie**
-  (32 × 5 idiomas — tarefa de conteúdo, não iniciada).
-- **U4** — painéis nine-patch temáticos (asset gerado no PixelLab veio
-  como kit/spritesheet — precisa extrair 1 peça e definir margens).
-- **J7** banner "Lendário!" com arte + slow-mo; **J8** cross-fade de fundo;
-  **J3** squash nos vizinhos empurrados.
-- **C1** Dinopédia com fatos (= U5); **C3** modos extras; **C5** tela de
-  novo recorde dedicada.
+- **U5** — falta só as setas "→" de progressão entre células.
+- **U4** — painéis nine-patch temáticos (o `create_ui_asset` do PixelLab
+  devolve um kit/spritesheet — precisa extrair 1 peça e definir margens;
+  os overlays já são opacos, o pior já foi resolvido).
+- **J8** cross-fade de fundo (baixo valor agora que o poço é opaco);
+  **J3** squash nos vizinhos empurrados pela fusão.
+- **C3** modos extras (diário / poço estreito / objetivo) — feature grande.
+- HUD: mostrar os 2 próximos dinos, ícone maior.
 - Fonte pixel só no título (atlas sem acentos — não serve de fonte global
   num jogo em 5 idiomas).
 

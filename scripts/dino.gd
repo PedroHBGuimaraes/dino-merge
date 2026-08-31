@@ -178,6 +178,23 @@ func _spawn_landing_dust() -> void:
 	get_tree().create_timer(life + 0.3).timeout.connect(dust.queue_free)
 
 
+## Called on the dinos around a merge point: a shove away from it plus a
+## quick sprite squash, so a merge visibly ripples through the pile
+## instead of the pile just silently absorbing it.
+func nudge(from: Vector2) -> void:
+	if _merging or freeze or not sprite.visible:
+		return
+	var away := global_position - from
+	var dist := away.length()
+	if dist < 0.01:
+		return
+	apply_central_impulse(away.normalized() * clampf(140.0 - dist * 0.3, 20.0, 140.0))
+	var base := sprite.scale
+	var t := create_tween()
+	t.tween_property(sprite, "scale", Vector2(base.x * 1.12, base.y * 0.88), 0.06)
+	t.tween_property(sprite, "scale", base, 0.12).set_trans(Tween.TRANS_SINE)
+
+
 func _ready() -> void:
 	contact_monitor = true
 	max_contacts_reported = 6

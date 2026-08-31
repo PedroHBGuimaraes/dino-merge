@@ -79,13 +79,11 @@ var _shaking := false
 @onready var info_button: TextureButton = $UI/InfoButton
 @onready var sequence_panel: Control = $UI/SequencePanel
 @onready var pause_panel: Control = $UI/PausePanel
-@onready var pause_main_buttons: VBoxContainer = $UI/PausePanel/CenterContainer/Panel/MainButtons
-@onready var pause_resume_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/ResumeButton
-@onready
-var pause_restart_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/RestartButton
-@onready
-var pause_settings_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/SettingsButton
-@onready var pause_menu_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/MenuButton
+@onready var pause_main_buttons: VBoxContainer = %MainButtons
+@onready var pause_resume_btn: Button = %MainButtons/ResumeButton
+@onready var pause_restart_btn: Button = %MainButtons/RestartButton
+@onready var pause_settings_btn: Button = %MainButtons/SettingsButton
+@onready var pause_menu_btn: Button = %MainButtons/MenuButton
 @onready var confirm_restart_panel: Control = $UI/PausePanel/ConfirmPanel
 @onready var confirm_restart_yes_btn: Button = $UI/PausePanel/ConfirmPanel/Center/Box/YesButton
 @onready var confirm_cancel_btn: Button = $UI/PausePanel/ConfirmPanel/Center/Box/CancelButton
@@ -282,6 +280,7 @@ func spawn_merged_dino(
 		_spawn_combo_text(global_pos, combo_count)
 	_spawn_merge_particles(global_pos, index)
 	_spawn_shockwave(global_pos, index)
+	_nudge_neighbors(global_pos, DinoChain.get_level(index).radius)
 
 	# Subtle by default, stronger the higher the merged level -- and the
 	# very top of the chain gets a distinctly longer buzz on top of its
@@ -429,6 +428,16 @@ func _spawn_shockwave(global_pos: Vector2, index: int) -> void:
 	)
 	tween.tween_property(wave, "modulate:a", 0.0, 0.34).set_trans(Tween.TRANS_SINE)
 	tween.chain().tween_callback(wave.queue_free)
+
+
+## Ripple the merge outward: every settled dino within a few radii of the
+## merge point gets a shove + squash (see dino.gd's nudge).
+func _nudge_neighbors(global_pos: Vector2, merged_radius: float) -> void:
+	var reach := merged_radius * 2.6
+	for d in get_tree().get_nodes_in_group("dino"):
+		if is_instance_valid(d) and d.has_method("nudge"):
+			if d.global_position.distance_to(global_pos) <= reach:
+				d.nudge(global_pos)
 
 
 func _spawn_floating_score(global_pos: Vector2, amount: int, index: int = 0) -> void:

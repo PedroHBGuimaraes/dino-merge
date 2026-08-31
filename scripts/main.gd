@@ -285,12 +285,12 @@ func spawn_merged_dino(
 	# very top of the chain gets a distinctly longer buzz on top of its
 	# own shake + banner, since that merge is rare enough to deserve a
 	# more noticeable cue than "just a bigger version of every other one".
-	Input.vibrate_handheld(int(20 + level_fraction * 60))
+	GameManager.vibrate(int(20 + level_fraction * 60))
 
 	if index >= HIGH_MERGE_SHAKE_LEVEL:
 		_screen_shake(7.0, 0.35)
 	if index == DinoChain.level_count() - 1:
-		Input.vibrate_handheld(200)
+		GameManager.vibrate(200)
 		_show_legendary_banner()
 
 

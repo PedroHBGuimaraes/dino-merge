@@ -60,14 +60,14 @@ var unlocked_achievements: Dictionary = {}
 ## Keys are the index as a string (JSON dictionary keys are strings).
 var discovered_species: Dictionary = {}
 
-## Audio mute state, persisted to the save so a muted game stays muted
-## across restarts (Godot does not persist AudioServer bus mutes itself).
+## Audio + haptics prefs, persisted (Godot persists none of these itself).
 ## `master_muted` is the HUD quick-mute (mutes everything); music/sfx are
-## the per-category toggles in SettingsPanel. Applied to the buses on boot
-## by _apply_audio_settings().
+## 0..1 volumes from the SettingsPanel sliders. Applied to the buses on
+## boot by _apply_audio_settings().
 var master_muted: bool = false
-var music_muted: bool = false
-var sfx_muted: bool = false
+var music_volume: float = 1.0
+var sfx_volume: float = 1.0
+var vibration_enabled: bool = true
 
 ## How many merges deep the current chain combo is (1 = a lone merge,
 ## no bonus). Read by main.gd right after register_combo_step() to
@@ -86,12 +86,20 @@ func _ready() -> void:
 	_apply_audio_settings()
 
 
-## Pushes the persisted mute flags onto the actual audio buses. Called once
-## on boot; the setters below keep the buses in sync after that.
+## Pushes the persisted audio prefs onto the actual buses. Called once on
+## boot; the setters below keep the buses in sync after that. A 0 volume
+## mutes the bus outright (linear_to_db(0) is -inf).
 func _apply_audio_settings() -> void:
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), master_muted)
-	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), music_muted)
-	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), sfx_muted)
+	_apply_bus_volume("Music", music_volume)
+	_apply_bus_volume("SFX", sfx_volume)
+
+
+func _apply_bus_volume(bus_name: String, volume: float) -> void:
+	var bus := AudioServer.get_bus_index(bus_name)
+	AudioServer.set_bus_mute(bus, volume <= 0.001)
+	if volume > 0.001:
+		AudioServer.set_bus_volume_db(bus, linear_to_db(volume))
 
 
 func set_master_muted(value: bool) -> void:
@@ -100,15 +108,39 @@ func set_master_muted(value: bool) -> void:
 	_save_progress()
 
 
-func set_music_muted(value: bool) -> void:
-	music_muted = value
-	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), value)
+func set_music_volume(value: float) -> void:
+	music_volume = clampf(value, 0.0, 1.0)
+	_apply_bus_volume("Music", music_volume)
 	_save_progress()
 
 
-func set_sfx_muted(value: bool) -> void:
-	sfx_muted = value
-	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), value)
+func set_sfx_volume(value: float) -> void:
+	sfx_volume = clampf(value, 0.0, 1.0)
+	_apply_bus_volume("SFX", sfx_volume)
+	_save_progress()
+
+
+func set_vibration_enabled(value: bool) -> void:
+	vibration_enabled = value
+	_save_progress()
+
+
+## Haptic tap, routed through the vibration pref so SettingsPanel's toggle
+## actually does something. Call this instead of Input.vibrate_handheld.
+func vibrate(ms: int) -> void:
+	if vibration_enabled:
+		Input.vibrate_handheld(ms)
+
+
+## Wipes run/collection progress (keeps language + audio prefs). Behind a
+## confirm in SettingsPanel.
+func reset_all_progress() -> void:
+	high_score = 0
+	games_played = 0
+	total_merges = 0
+	has_seen_tutorial = false
+	unlocked_achievements.clear()
+	discovered_species.clear()
 	_save_progress()
 
 
@@ -264,10 +296,18 @@ func _load_progress() -> void:
 			total_merges = int(data["total_merges"])
 		if data.has("master_muted"):
 			master_muted = bool(data["master_muted"])
-		if data.has("music_muted"):
-			music_muted = bool(data["music_muted"])
-		if data.has("sfx_muted"):
-			sfx_muted = bool(data["sfx_muted"])
+		# music_volume/sfx_volume superseded the old music_muted/sfx_muted
+		# bools -- migrate a pre-slider save so a muted category stays off.
+		if data.has("music_volume"):
+			music_volume = clampf(float(data["music_volume"]), 0.0, 1.0)
+		elif bool(data.get("music_muted", false)):
+			music_volume = 0.0
+		if data.has("sfx_volume"):
+			sfx_volume = clampf(float(data["sfx_volume"]), 0.0, 1.0)
+		elif bool(data.get("sfx_muted", false)):
+			sfx_volume = 0.0
+		if data.has("vibration_enabled"):
+			vibration_enabled = bool(data["vibration_enabled"])
 		if (
 			data.has("unlocked_achievements")
 			and typeof(data["unlocked_achievements"]) == TYPE_ARRAY
@@ -296,8 +336,9 @@ func _save_progress() -> void:
 		"discovered_species": discovered_species.keys(),
 		"language": LocaleManager.language,
 		"master_muted": master_muted,
-		"music_muted": music_muted,
-		"sfx_muted": sfx_muted,
+		"music_volume": music_volume,
+		"sfx_volume": sfx_volume,
+		"vibration_enabled": vibration_enabled,
 	}
 	file.store_string(JSON.stringify(data))
 	file.close()

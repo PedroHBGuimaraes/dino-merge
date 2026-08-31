@@ -97,6 +97,11 @@ var final_score_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/F
 var best_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/HighScoreRow/HighScoreLabel
 @onready var continue_btn: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/ContinueButton
 @onready var restart_button: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/RestartButton
+@onready var game_over_menu_btn: Button = $UI/GameOverPanel/CenterContainer/VBoxContainer/MenuButton
+@onready var reached_row: HBoxContainer = $UI/GameOverPanel/CenterContainer/VBoxContainer/ReachedRow
+@onready
+var reached_icon: TextureRect = $UI/GameOverPanel/CenterContainer/VBoxContainer/ReachedRow/Icon
+@onready var reached_label: Label = $UI/GameOverPanel/CenterContainer/VBoxContainer/ReachedRow/Label
 @onready var drop_sfx: AudioStreamPlayer = $DropSfx
 @onready var merge_sfx: AudioStreamPlayer = $MergeSfx
 @onready var music: AudioStreamPlayer = $Music
@@ -114,6 +119,7 @@ func _ready() -> void:
 	GameManager.score_changed.connect(_on_score_changed)
 	GameManager.game_over.connect(_on_game_over)
 	restart_button.pressed.connect(_on_restart_pressed)
+	game_over_menu_btn.pressed.connect(_on_pause_menu_pressed)
 	continue_btn.pressed.connect(_on_continue_pressed)
 	sound_toggle_btn.pressed.connect(_on_sound_toggle_pressed)
 	pause_button.pressed.connect(_on_pause_pressed)
@@ -606,6 +612,7 @@ func _on_game_over() -> void:
 	final_score_label.text = Loc.t("GAMEOVER_FINAL_SCORE", {"score": GameManager.score})
 	best_label.text = Loc.t("GAMEOVER_BEST_SCORE", {"score": GameManager.high_score})
 	record_label.visible = GameManager.is_new_record
+	_update_reached_row()
 	continue_btn.visible = AdsManager.is_rewarded_ad_ready()
 	continue_btn.disabled = false
 	restart_button.disabled = false
@@ -631,6 +638,19 @@ func _on_game_over() -> void:
 		. set_trans(Tween.TRANS_BACK)
 		. set_ease(Tween.EASE_OUT)
 	)
+
+
+## "You reached the {species}" line -- the highest dino a merge produced
+## this run. Hidden if the player never merged anything.
+func _update_reached_row() -> void:
+	var lvl_index := GameManager.run_highest_level
+	if lvl_index < 0:
+		reached_row.visible = false
+		return
+	var lvl := DinoChain.get_level(lvl_index)
+	reached_row.visible = true
+	reached_icon.texture = lvl.texture
+	reached_label.text = Loc.t("GAMEOVER_REACHED", {"species": lvl.dino_name})
 
 
 func _on_continue_pressed() -> void:

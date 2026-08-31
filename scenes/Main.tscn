@@ -285,6 +285,25 @@ theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 text = "GAMEOVER_FINAL_SCORE"
 
+[node name="ReachedRow" type="HBoxContainer" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/ReachedRow"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/ReachedRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.86, 0.76, 0.6, 1)
+theme_override_font_sizes/font_size = 20
+text = "GAMEOVER_REACHED"
+
 [node name="NewRecordLabel" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 visible = false
 theme_override_colors/font_color = Color(1, 0.84, 0, 1)
@@ -360,6 +379,30 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_vertical = 4
 text = "GAMEOVER_RESTART"
+
+[node name="MenuButton" type="Button" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(220, 52)
+
+[node name="Content" type="HBoxContainer" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/MenuButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/MenuButton/Content"]
+custom_minimum_size = Vector2(26, 26)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/MenuButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "PAUSE_MENU"
 
 [node name="PausePanel" type="Control" parent="UI"]
 visible = false

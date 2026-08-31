@@ -11,6 +11,7 @@ HUD_COMBO,"COMBO x{count}!","COMBO x{count}!","COMBO x{count}!","COMBO x{count}!
 GAMEOVER_TITLE,"Fim de Jogo!","Game Over!","¡Fin del juego!","Game Over!","Fin de partie !"
 GAMEOVER_FINAL_SCORE,"Pontuação final: {score}","Final score: {score}","Puntuación final: {score}","Endstand: {score}","Score final : {score}"
 GAMEOVER_NEW_RECORD,"🏆 Novo recorde!","🏆 New record!","🏆 ¡Nuevo récord!","🏆 Neuer Rekord!","🏆 Nouveau record !"
+GAMEOVER_REACHED,"Você chegou ao {species}","You reached {species}","Llegaste a {species}","Du hast {species} erreicht","Tu as atteint {species}"
 GAMEOVER_BEST_SCORE,"Recorde pessoal: {score}","Personal best: {score}","Récord personal: {score}","Persönlicher Rekord: {score}","Record personnel : {score}"
 GAMEOVER_CONTINUE_AD,"Assistir anúncio e continuar","Watch ad and continue","Ver anuncio y continuar","Werbung ansehen & weiter","Voir une pub et continuer"
 GAMEOVER_RESTART,"Jogar novamente","Play again","Jugar de nuevo","Nochmal spielen","Rejouer"

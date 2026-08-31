@@ -73,6 +73,9 @@ var sfx_muted: bool = false
 ## no bonus). Read by main.gd right after register_combo_step() to
 ## decide whether/how to show combo feedback.
 var combo_count: int = 0
+## Highest chain index produced by a merge in the CURRENT run (-1 = no
+## merge yet). Reset each run; shown on the game-over screen.
+var run_highest_level: int = -1
 ## Time.get_ticks_msec() of the last merge, or far enough in the past
 ## that the very first merge of a run never reads as "chained".
 var _last_merge_ms: int = -1000000000
@@ -160,6 +163,7 @@ func reset() -> void:
 	is_game_over = false
 	is_new_record = false
 	combo_count = 0
+	run_highest_level = -1
 	_last_merge_ms = -1000000000
 	score_changed.emit(score)
 
@@ -187,6 +191,7 @@ func register_game_started() -> void:
 ## as a merge for the lifetime-count achievements).
 func register_merge(new_level_index: int) -> void:
 	total_merges += 1
+	run_highest_level = maxi(run_highest_level, new_level_index)
 	if total_merges == 1:
 		_unlock("first_merge")
 	if total_merges >= Achievements.MERGES_THRESHOLD:

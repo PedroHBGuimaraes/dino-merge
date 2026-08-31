@@ -47,6 +47,13 @@ func _run() -> void:
 		_node._on_pause_pressed()
 	elif _mode == "sequence":
 		_node._on_info_pressed()
+	elif _mode == "dinopedia_detail":
+		# discover a mid-chain species first so a cell is tappable
+		root.get_node_or_null("GameManager").mark_species_discovered(14)
+		_node._on_info_pressed()
+		await create_timer(0.3).timeout
+		var sp := _node.get_node("UI/SequencePanel")
+		sp._show_detail(14)
 	elif _mode == "settings_game":
 		_node._on_pause_pressed()
 		_node._on_pause_settings_pressed()

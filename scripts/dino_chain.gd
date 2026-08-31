@@ -106,7 +106,9 @@ func _ready() -> void:
 		lvl.color = Color.from_hsv(float(i) / SPECIES.size(), 0.65, 0.9)
 		lvl.texture = _try_load_texture(species_id)
 		lvl.content_size = CONTENT_SIZE.get(species_id, 64.0)
-		lvl.idle_frames = _try_load_idle_frames(species_id)
+		lvl.idle_frames = _try_load_idle_frames(species_id, "")
+		lvl.idle_frames_baby = _try_load_idle_frames(species_id, "filhote_")
+		lvl.idle_frames_young = _try_load_idle_frames(species_id, "jovem_")
 		lvl.collision_hull = _parse_collision_hull(collision_data.get(species_id, []))
 		levels.append(lvl)
 
@@ -139,15 +141,16 @@ func _try_load_texture(species_id: String) -> Texture2D:
 	return load(path) as Texture2D
 
 
-## Loads dino_<species>_idle_0..N.png from assets/dino/idle/ in order,
-## stopping at the first missing index. Species with no idle set (not yet
-## generated via PixelLab) simply get an empty array back, and dino.gd
-## falls back to the static texture for those.
-func _try_load_idle_frames(species_id: String) -> Array[Texture2D]:
+## Loads dino_<species>_idle_<stage>0..N.png from assets/dino/idle/ in
+## order, stopping at the first missing index. `stage` is "" for the adult
+## set, "filhote_" / "jovem_" for the baby / juvenile sets. Species with no
+## such set simply get an empty array back, and dino.gd falls back to the
+## static texture (adult) or skips the growth stage (baby/young).
+func _try_load_idle_frames(species_id: String, stage: String) -> Array[Texture2D]:
 	var frames: Array[Texture2D] = []
 	var i := 0
 	while true:
-		var path := "%s/idle/dino_%s_idle_%d.png" % [ASSET_DIR, species_id, i]
+		var path := "%s/idle/dino_%s_idle_%s%d.png" % [ASSET_DIR, species_id, stage, i]
 		if not ResourceLoader.exists(path):
 			break
 		frames.append(load(path) as Texture2D)

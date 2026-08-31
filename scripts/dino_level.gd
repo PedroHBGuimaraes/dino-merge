@@ -12,6 +12,13 @@ extends Resource
 ## via PixelLab's animate_image). Empty when this species has no idle
 ## animation yet -- dino.gd falls back to the static `texture` in that case.
 @export var idle_frames: Array[Texture2D] = []
+## Baby / juvenile idle frames (assets/dino/idle/dino_<species>_idle_filhote_N
+## and _jovem_N). Used only for the brief "just born" growth animation a
+## merged dino plays (see dino.gd play_birth_animation) -- the settled
+## idle loop always uses the adult `idle_frames`. Empty when a species has
+## no life-stage art, in which case the merge just scales up the adult.
+@export var idle_frames_baby: Array[Texture2D] = []
+@export var idle_frames_young: Array[Texture2D] = []
 ## Longest side (px) of the sprite's actual non-transparent content,
 ## not the raw canvas size. Sprites share a 64x64 canvas but differ a
 ## lot in how much of it they fill, so scaling by canvas size alone

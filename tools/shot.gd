@@ -22,7 +22,7 @@ func _initialize() -> void:
 		_warmup = float(args[2])
 	if args.size() >= 4:
 		_mode = args[3]
-	var gm := root.get_node_or_null("/root/GameManager")
+	var gm := root.get_node_or_null("GameManager")
 	if gm != null:
 		gm.has_seen_tutorial = true
 	var packed: PackedScene = load(_scene_path)
@@ -42,7 +42,7 @@ func _run() -> void:
 		await _play()
 	elif _mode == "gameover":
 		await _play()
-		root.get_node_or_null("/root/GameManager").trigger_game_over()
+		root.get_node_or_null("GameManager").trigger_game_over()
 	elif _mode == "pause":
 		_node._on_pause_pressed()
 	elif _mode == "sequence":
@@ -56,8 +56,20 @@ func _run() -> void:
 		_node.get_node("SettingsPanel").open()
 	elif _mode == "toast":
 		await create_timer(0.4).timeout
-		root.get_node("/root/GameManager").achievement_unlocked.emit("first_merge")
+		root.get_node_or_null("GameManager").achievement_unlocked.emit("first_merge")
 		await create_timer(0.6).timeout
+	elif _mode == "birth":
+		# Two dinos down the same column so they merge, then grab the frame
+		# mid growth animation.
+		for x in [360.0, 360.0]:
+			_node.current_level_index = 2
+			_node.next_level_index = 2
+			_node.preview_x = x
+			_node._move_preview(x)
+			_node.can_drop = true
+			_node._drop()
+			await create_timer(0.7).timeout
+		await create_timer(0.4).timeout
 	await create_timer(_warmup).timeout
 	var img := root.get_texture().get_image()
 	img.save_png(_out)

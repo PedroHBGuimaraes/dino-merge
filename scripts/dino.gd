@@ -45,6 +45,10 @@ var _idle_frames: Array[Texture2D] = []
 var _idle_frame_index: int = 0
 var _idle_elapsed: float = 0.0
 var _has_landed: bool = false
+## True only during the brief post-merge growth animation (baby -> young ->
+## adult). Blocks the idle-frame loop in _process so it doesn't overwrite
+## the growth textures mid-animation.
+var _birthing: bool = false
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var collision: CollisionShape2D = $CollisionShape2D
@@ -99,24 +103,50 @@ func setup(index: int) -> void:
 	queue_redraw()
 
 
-## "Impact" pop played when this dino was just born from a merge (not
-## when freshly dropped -- the physical fall already reads as "arrival"
-## for those): starts squashed flat as if it just landed hard, then
-## recovers to its normal proportions. Never exceeds base_scale in
-## either axis at any point (a prior version overshot past it, which
-## read as the merged dino visibly growing bigger than its correct
-## size instead of just landing with some punch) -- TRANS_QUAD/EASE_OUT
-## approaches the target monotonically, unlike TRANS_BACK which
-## overshoots by design.
-func play_spawn_bounce() -> void:
+## Played when this dino is born from a merge (not when freshly dropped --
+## the physical fall already reads as "arrival" for those). If the species
+## has life-stage art it hatches small as a baby and grows through the
+## juvenile form to full size in ~0.3s; otherwise it falls back to the
+## old squash-and-recover pop. Never overshoots the final scale.
+func play_birth_animation() -> void:
 	if not sprite.visible:
 		return
+	var lvl := DinoChain.get_level(level_index)
 	var base_scale := sprite.scale
-	sprite.scale = Vector2(base_scale.x, base_scale.y * 0.6)
+
+	if lvl.idle_frames_baby.is_empty():
+		sprite.scale = Vector2(base_scale.x, base_scale.y * 0.6)
+		var pop := create_tween()
+		pop.tween_property(sprite, "scale", base_scale, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(
+			Tween.EASE_OUT
+		)
+		return
+
+	_birthing = true
+	var young := lvl.idle_frames_young if not lvl.idle_frames_young.is_empty() else lvl.idle_frames
+	sprite.texture = lvl.idle_frames_baby[0]
+	sprite.scale = base_scale * 0.5
+
 	var tween := create_tween()
+	(
+		tween
+		. tween_property(sprite, "scale", base_scale * 0.76, 0.14)
+		. set_trans(Tween.TRANS_SINE)
+		. set_ease(Tween.EASE_IN_OUT)
+	)
+	tween.tween_callback(func(): sprite.texture = young[0])
 	tween.tween_property(sprite, "scale", base_scale, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(
 		Tween.EASE_OUT
 	)
+	tween.tween_callback(_finish_birth)
+
+
+func _finish_birth() -> void:
+	_birthing = false
+	if not _idle_frames.is_empty():
+		sprite.texture = _idle_frames[0]
+	_idle_frame_index = 0
+	_idle_elapsed = 0.0
 
 
 ## Low, brief sand puff at the dino's feet on its first real landing.
@@ -155,7 +185,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _merging or _idle_frames.size() <= 1:
+	if _merging or _birthing or _idle_frames.size() <= 1:
 		return
 	_idle_elapsed += delta
 	if _idle_elapsed < IDLE_FRAME_DURATION:
@@ -242,7 +272,7 @@ func _on_body_entered(body: Node) -> void:
 ## toward their midpoint (with a light shrink, like they're being
 ## sucked together) instead of vanishing on contact, brightening as a
 ## soft glow blooms between them, then a sharper flash plays right as
-## the merged dino is born -- play_spawn_bounce() gives it the "impact"
+## the merged dino is born -- play_birth_animation() grows it in
 ## landing pose.
 func _do_merge(other: RigidBody2D) -> void:
 	if not is_instance_valid(other):

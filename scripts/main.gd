@@ -232,6 +232,7 @@ func _drop() -> void:
 	# spawner_preview.position, so no conversion is needed here.
 	dino.global_position = Vector2(preview_x, SPAWN_Y)
 	dino.setup(current_level_index)
+	GameManager.mark_species_discovered(current_level_index)
 	drop_sfx.play()
 	current_level_index = next_level_index
 	next_level_index = _random_spawn_level()
@@ -254,7 +255,8 @@ func spawn_merged_dino(
 	dino.add_to_group("dino")
 	dino.global_position = global_pos
 	dino.setup(index)
-	dino.play_spawn_bounce()
+	GameManager.mark_species_discovered(index)
+	dino.play_birth_animation()
 
 	# Pitch (and a touch of volume) climbs with the merged level, so a
 	# low-tier merge sounds subtly different from a top-of-the-chain one

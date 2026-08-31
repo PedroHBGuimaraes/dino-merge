@@ -10,6 +10,7 @@ signal score_changed(new_score: int)
 signal game_over
 signal continued
 signal achievement_unlocked(id: String)
+signal species_discovered(index: int)
 
 ## Game over fires as soon as a dino is settled (see dino.gd's velocity
 ## check) above the danger line. Can't be 0.0: a freshly-spawned dino
@@ -53,6 +54,11 @@ var has_seen_tutorial: bool = false
 var games_played: int = 0
 var total_merges: int = 0
 var unlocked_achievements: Dictionary = {}
+## Chain indices the player has ever seen in the pit -- the spawner pool
+## (0..MAX_SPAWN_LEVEL, always) plus every level ever produced by a merge.
+## Drives the silhouette/reveal state of the sequence ("Dinopédia") screen.
+## Keys are the index as a string (JSON dictionary keys are strings).
+var discovered_species: Dictionary = {}
 
 ## Audio mute state, persisted to the save so a muted game stays muted
 ## across restarts (Godot does not persist AudioServer bus mutes itself).
@@ -194,6 +200,26 @@ func register_merge(new_level_index: int) -> void:
 	_save_progress()
 
 
+## Called by main.gd for every dino that enters the pit (dropped or born
+## from a merge). First sighting of a species persists and fires
+## species_discovered so the Dinopédia can reveal it.
+func mark_species_discovered(index: int) -> void:
+	var key := str(index)
+	if discovered_species.has(key):
+		return
+	discovered_species[key] = true
+	species_discovered.emit(index)
+	_save_progress()
+
+
+func is_species_discovered(index: int) -> bool:
+	return discovered_species.has(str(index))
+
+
+func discovered_count() -> int:
+	return discovered_species.size()
+
+
 func is_unlocked(id: String) -> bool:
 	return unlocked_achievements.has(id)
 
@@ -243,6 +269,9 @@ func _load_progress() -> void:
 		):
 			for id in data["unlocked_achievements"]:
 				unlocked_achievements[str(id)] = true
+		if data.has("discovered_species") and typeof(data["discovered_species"]) == TYPE_ARRAY:
+			for idx in data["discovered_species"]:
+				discovered_species[str(idx)] = true
 		persist_language = LocaleManager.load_prefs(str(data.get("language", "")))
 	if persist_language:
 		_save_progress()
@@ -259,6 +288,7 @@ func _save_progress() -> void:
 		"games_played": games_played,
 		"total_merges": total_merges,
 		"unlocked_achievements": unlocked_achievements.keys(),
+		"discovered_species": discovered_species.keys(),
 		"language": LocaleManager.language,
 		"master_muted": master_muted,
 		"music_muted": music_muted,

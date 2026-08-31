@@ -29,7 +29,7 @@ alignment = 1
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 34
 horizontal_alignment = 1
-text = "Configurações"
+text = "SETTINGS_TITLE"
 
 [node name="MusicRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -42,7 +42,7 @@ custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
-text = "Música"
+text = "SETTINGS_MUSIC"
 
 [node name="Toggle" type="TextureButton" parent="CenterContainer/VBoxContainer/MusicRow"]
 custom_minimum_size = Vector2(40, 40)
@@ -62,7 +62,7 @@ custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
-text = "Efeitos"
+text = "SETTINGS_SFX"
 
 [node name="Toggle" type="TextureButton" parent="CenterContainer/VBoxContainer/SfxRow"]
 custom_minimum_size = Vector2(40, 40)
@@ -71,8 +71,26 @@ texture_normal = ExtResource("2")
 ignore_texture_size = true
 stretch_mode = 4
 
+[node name="LanguageRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/LanguageRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 22
+text = "SETTINGS_LANGUAGE"
+
+[node name="LanguageOption" type="OptionButton" parent="CenterContainer/VBoxContainer/LanguageRow"]
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+auto_translate_mode = 2
+
 [node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(200, 56)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Voltar"
+text = "COMMON_BACK"

@@ -13,18 +13,15 @@ config_version=5
 config/name="dino-merge"
 run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
-config/icon="res://assets/app_icon/app_icon.png"
 boot_splash/bg_color=Color(0.15, 0.08, 0.05, 1)
-boot_splash/image="res://assets/app_icon/app_icon.png"
-boot_splash/fullsize=false
+boot_splash/stretch_mode=0
 boot_splash/use_filter=false
-
-[audio]
-
-buses/default_bus_layout="res://default_bus_layout.tres"
+boot_splash/image="res://assets/app_icon/app_icon.png"
+config/icon="res://assets/app_icon/app_icon.png"
 
 [autoload]
 
+LocaleManager="*res://scripts/locale_manager.gd"
 GameManager="*res://scripts/game_manager.gd"
 DinoChain="*res://scripts/dino_chain.gd"
 Achievements="*res://scripts/achievements.gd"
@@ -36,8 +33,17 @@ SceneTransition="*res://scenes/SceneTransition.tscn"
 window/size/viewport_width=400
 window/size/viewport_height=700
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
-window/handheld/orientation="portrait"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[gui]
+
+theme/custom="res://assets/ui/theme/main_theme.tres"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://translations.pt.translation", "res://translations.en.translation", "res://translations.es.translation", "res://translations.de.translation", "res://translations.fr.translation")
+locale/fallback="pt"
 
 [physics]
 
@@ -49,3 +55,4 @@ window/handheld/orientation="portrait"
 textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true

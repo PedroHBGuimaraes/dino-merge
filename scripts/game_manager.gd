@@ -11,8 +11,27 @@ signal game_over
 signal continued
 signal achievement_unlocked(id: String)
 
-const GAME_OVER_DELAY := 3.0
+## Game over fires as soon as a dino is settled (see dino.gd's velocity
+## check) above the danger line. Can't be 0.0: a freshly-spawned dino
+## has linear_velocity == ZERO for exactly one physics frame before
+## gravity accelerates it past SETTLE_SPEED, which would otherwise read
+## as "instantly settled" and end the run on every single drop. This
+## only needs to outlast that one frame -- it's not a real grace period.
+const GAME_OVER_DELAY := 0.2
 const SAVE_PATH := "user://highscore.json"
+
+## Chain-combo scoring: merges land close together in time (a cascade,
+## one merge's landing setting up the next) rather than each being
+## proven to physically cause the next -- RigidBody2D contact chains are
+## too indirect (a nudge, the pile resettling) to attribute cleanly, so
+## a shared timer since the last merge is the robust signal here. A
+## merge within COMBO_WINDOW seconds of the previous one extends the
+## chain; a gap resets it to a fresh combo of 1 (i.e. no bonus).
+const COMBO_WINDOW := 1.5
+## +0.5x per chained merge, capped at 3x (combo 5+) so a long lucky
+## cascade can't runaway the score indefinitely.
+const COMBO_MULTIPLIER_STEP := 0.5
+const COMBO_MAX_MULTIPLIER := 3.0
 
 ## Global Y (real screen/world coordinates, NOT design coordinates) above
 ## which an item is "above the danger line". Main.gd computes this every
@@ -30,6 +49,14 @@ var games_played: int = 0
 var total_merges: int = 0
 var unlocked_achievements: Dictionary = {}
 
+## How many merges deep the current chain combo is (1 = a lone merge,
+## no bonus). Read by main.gd right after register_combo_step() to
+## decide whether/how to show combo feedback.
+var combo_count: int = 0
+## Time.get_ticks_msec() of the last merge, or far enough in the past
+## that the very first merge of a run never reads as "chained".
+var _last_merge_ms: int = -1000000000
+
 
 func _ready() -> void:
 	_load_progress()
@@ -43,6 +70,19 @@ func add_score(points: int) -> void:
 	for threshold in Achievements.SCORE_THRESHOLDS:
 		if score >= threshold:
 			_unlock("score_%d" % threshold)
+
+
+## Call once per merge, right as it lands (see dino.gd's _do_merge),
+## before add_score. Advances/resets the chain combo and returns the
+## score multiplier that applies to THIS merge.
+func register_combo_step() -> float:
+	var now := Time.get_ticks_msec()
+	if now - _last_merge_ms <= int(COMBO_WINDOW * 1000.0):
+		combo_count += 1
+	else:
+		combo_count = 1
+	_last_merge_ms = now
+	return minf(1.0 + COMBO_MULTIPLIER_STEP * (combo_count - 1), COMBO_MAX_MULTIPLIER)
 
 
 func trigger_game_over() -> void:
@@ -63,6 +103,8 @@ func continue_run() -> void:
 		return
 	is_game_over = false
 	is_new_record = false
+	combo_count = 0
+	_last_merge_ms = -1000000000
 	continued.emit()
 
 
@@ -70,6 +112,8 @@ func reset() -> void:
 	score = 0
 	is_game_over = false
 	is_new_record = false
+	combo_count = 0
+	_last_merge_ms = -1000000000
 	score_changed.emit(score)
 
 
@@ -121,27 +165,40 @@ func _unlock(id: String) -> void:
 	_save_progress()
 
 
+## Chamado pelo LocaleManager.set_language() pra gravar a escolha manual
+## de idioma (já em LocaleManager.language) no mesmo save do progresso.
+func save_language() -> void:
+	_save_progress()
+
+
 func _load_progress() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		return
-	var data: Variant = JSON.parse_string(file.get_as_text())
-	file.close()
-	if typeof(data) != TYPE_DICTIONARY:
-		return
-	if data.has("high_score"):
-		high_score = int(data["high_score"])
-	if data.has("seen_tutorial"):
-		has_seen_tutorial = bool(data["seen_tutorial"])
-	if data.has("games_played"):
-		games_played = int(data["games_played"])
-	if data.has("total_merges"):
-		total_merges = int(data["total_merges"])
-	if data.has("unlocked_achievements") and typeof(data["unlocked_achievements"]) == TYPE_ARRAY:
-		for id in data["unlocked_achievements"]:
-			unlocked_achievements[str(id)] = true
+	# `true` = o save não tinha idioma gravado (jogador novo ou save
+	# pré-i18n): grava agora o idioma detectado pelo LocaleManager no boot.
+	var persist_language := true
+	var data: Variant = null
+	if FileAccess.file_exists(SAVE_PATH):
+		var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+		if file != null:
+			data = JSON.parse_string(file.get_as_text())
+			file.close()
+	if typeof(data) == TYPE_DICTIONARY:
+		if data.has("high_score"):
+			high_score = int(data["high_score"])
+		if data.has("seen_tutorial"):
+			has_seen_tutorial = bool(data["seen_tutorial"])
+		if data.has("games_played"):
+			games_played = int(data["games_played"])
+		if data.has("total_merges"):
+			total_merges = int(data["total_merges"])
+		if (
+			data.has("unlocked_achievements")
+			and typeof(data["unlocked_achievements"]) == TYPE_ARRAY
+		):
+			for id in data["unlocked_achievements"]:
+				unlocked_achievements[str(id)] = true
+		persist_language = LocaleManager.load_prefs(str(data.get("language", "")))
+	if persist_language:
+		_save_progress()
 
 
 func _save_progress() -> void:
@@ -155,6 +212,7 @@ func _save_progress() -> void:
 		"games_played": games_played,
 		"total_merges": total_merges,
 		"unlocked_achievements": unlocked_achievements.keys(),
+		"language": LocaleManager.language,
 	}
 	file.store_string(JSON.stringify(data))
 	file.close()

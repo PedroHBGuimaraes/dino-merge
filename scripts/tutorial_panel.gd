@@ -46,7 +46,10 @@ func dismiss() -> void:
 	closed.emit()
 
 
+## The panel is shown once, before any settings screen is reachable, so the
+## language can't change while it's open -- `open()` sets the button label
+## fresh every time via _refresh_step(), no live re-translation needed.
 func _refresh_step() -> void:
 	step1.visible = _step == 0
 	step2.visible = _step == 1
-	next_button.text = "Entendi!" if _step == 1 else "Próximo"
+	next_button.text = Loc.t("TUTORIAL_GOT_IT") if _step == 1 else Loc.t("TUTORIAL_NEXT")

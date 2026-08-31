@@ -11,7 +11,7 @@ var achievements_button: Button = $CenterContainer/VBoxContainer/ButtonRow/Achie
 
 
 func _ready() -> void:
-	high_score_label.text = "Recorde: %d" % GameManager.high_score
+	_refresh_high_score()
 	play_button.pressed.connect(_on_play_pressed)
 	achievements_button.pressed.connect(_on_achievements_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
@@ -45,8 +45,15 @@ func _on_settings_pressed() -> void:
 	settings_panel.open()
 
 
+## Settings is the only place the language can change from this screen, and
+## it closes before the label is visible again -- so a refresh on close is
+## enough, no need to listen for the switch itself.
 func _on_settings_closed() -> void:
-	high_score_label.text = "Recorde: %d" % GameManager.high_score
+	_refresh_high_score()
+
+
+func _refresh_high_score() -> void:
+	high_score_label.text = Loc.t("MENU_HIGH_SCORE", {"score": GameManager.high_score})
 
 
 func _on_achievements_pressed() -> void:

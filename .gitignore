@@ -2,3 +2,8 @@
 .godot/
 /android/
 /_screenshots/
+
+# Build artifacts
+*.apk
+*.apk.idsig
+*.aab

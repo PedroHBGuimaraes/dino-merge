@@ -2,6 +2,9 @@ extends Node2D
 
 ## Purely visual: shows which dino will drop next, follows the player's
 ## drag before release. No physics body until the player actually drops it.
+## Drawn at the exact same scale dino.gd uses for the real dropped sprite
+## (see DinoLevel.content_size) so the held preview never mismatches the
+## size the dino actually lands at.
 
 var level_index: int = 0
 

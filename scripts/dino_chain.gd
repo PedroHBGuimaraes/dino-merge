@@ -86,14 +86,16 @@ const CONTENT_SIZE := {
 }
 
 const ASSET_DIR := "res://assets/dino"
-const MIN_RADIUS := 22.0
-const RADIUS_STEP := 4.6
+const COLLISION_DATA_PATH := "res://assets/dino/collision_data.json"
+const MIN_RADIUS := 35.1
+const RADIUS_STEP := 7.4
 
 var levels: Array[DinoLevel] = []
 
 
 func _ready() -> void:
 	levels.clear()
+	var collision_data := _load_collision_data()
 	for i in SPECIES.size():
 		var species_id: String = SPECIES[i]
 		var lvl := DinoLevel.new()
@@ -105,7 +107,29 @@ func _ready() -> void:
 		lvl.texture = _try_load_texture(species_id)
 		lvl.content_size = CONTENT_SIZE.get(species_id, 64.0)
 		lvl.idle_frames = _try_load_idle_frames(species_id)
+		lvl.collision_hull = _parse_collision_hull(collision_data.get(species_id, []))
 		levels.append(lvl)
+
+
+## Convex hull of each species' real sprite outline, generated offline
+## (see tools/gen_collision.gd) from the non-transparent alpha of
+## dino_<species>_adulto.png. A single shape per species -- keeps the
+## collider close to the actual drawn silhouette instead of the
+## enclosing circle, without the internal-seam physics instability a
+## multi-piece decomposition caused once dinos could rotate freely.
+func _load_collision_data() -> Dictionary:
+	if not FileAccess.file_exists(COLLISION_DATA_PATH):
+		return {}
+	var text := FileAccess.get_file_as_string(COLLISION_DATA_PATH)
+	var parsed = JSON.parse_string(text)
+	return parsed if parsed is Dictionary else {}
+
+
+func _parse_collision_hull(raw: Array) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for pair in raw:
+		pts.append(Vector2(pair[0], pair[1]))
+	return pts
 
 
 func _try_load_texture(species_id: String) -> Texture2D:

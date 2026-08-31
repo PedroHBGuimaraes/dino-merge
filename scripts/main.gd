@@ -4,16 +4,29 @@ const DINO_SCENE := preload("res://scenes/Dino.tscn")
 const FLOATING_SCORE_SCENE := preload("res://scenes/FloatingScoreText.tscn")
 
 ## The whole container/dinos/spawner subtree was designed against this
-## reference canvas. GameplayRoot gets scaled + centered to fit whatever
-## the actual viewport is (see _fit_gameplay_to_viewport), so every
-## coordinate below stays in this fixed design space regardless of the
-## real screen/window size -- nothing else needs to change per device.
+## reference canvas, and lives directly in it -- GameplayRoot itself is
+## never scaled or repositioned (unlike an earlier version of this
+## file). Fitting that canvas to whatever the actual viewport is (see
+## _fit_gameplay_to_viewport) happens purely through the Camera2D's zoom
+## and position instead: RigidBody2D/StaticBody2D silently ignore any
+## scale inherited from an ancestor for both physics and rendering, so
+## scaling GameplayRoot used to leave every dino (and the walls/floor)
+## rendering as if that scale weren't applied at all -- ~1/scale times
+## too big. Camera zoom is a pure rendering-time transform and doesn't
+## have that problem.
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
 
 const LEFT_X := 40.0
 const RIGHT_X := 680.0
 const SPAWN_Y := 100.0
 const DANGER_LINE_Y_DESIGN := 220.0
+## Real screen pixels (not design space -- the UI CanvasLayer's TopBar
+## sits at fixed pixel offsets, unscaled) reserved above the pit so the
+## score/next-dino panel never overlaps GameplayRoot. Must stay >=
+## scenes/Main.tscn's TopBar offset_bottom (94) plus a small gap --
+## otherwise a dino resting near the top of the pit renders partly
+## behind that panel and is unreadable.
+const TOP_UI_MARGIN := 100.0
 const MAX_SPAWN_LEVEL := 4  # only the 5 smallest species come out of the spawner
 const SOUND_ON_ICON := preload("res://assets/ui/merge/icon_sound_on.png")
 const SOUND_OFF_ICON := preload("res://assets/ui/merge/icon_sound_off.png")
@@ -31,10 +44,24 @@ const BG_HIGH_SCORE := 800
 ## screen shake on top of the usual particles/pop (top ~6 of 32 levels).
 const HIGH_MERGE_SHAKE_LEVEL := 26
 
+## The dino currently loaded in the spawner (dragged/dropped on release).
+var current_level_index: int = 0
+## The one that will load next, after `current_level_index` drops --
+## shown ahead of time via next_icon so the player can plan the drop
+## after this one, not just the one they're already holding.
 var next_level_index: int = 0
 var can_drop: bool = true
 var preview_x: float = 360.0
 var _bg_tier: int = 0
+## Design-space-to-viewport-pixel zoom factor, applied via the camera
+## (see _fit_gameplay_to_viewport) rather than by scaling GameplayRoot.
+## RigidBody2D/StaticBody2D do not support inherited scale for physics
+## or render sync -- Godot silently treats a scaled ancestor as if it
+## weren't there for any physics body underneath it, which used to
+## render every dropped dino ~1/_game_scale times too big (and would
+## have equally broken the walls'/floor's collision-vs-visual
+## alignment) while GameplayRoot itself carried that scale instead.
+var _game_scale: float = 1.0
 
 @onready var camera: Camera2D = $Camera2D
 @onready var background: TextureRect = $BackgroundLayer/Background
@@ -42,9 +69,11 @@ var _bg_tier: int = 0
 @onready var dinos: Node2D = $GameplayRoot/Dinos
 @onready var spawner_preview: Node2D = $GameplayRoot/SpawnerPreview
 @onready var score_label: Label = $UI/ScoreRow/ScoreLabel
-@onready var next_label: Label = $UI/NextLabel
+@onready var next_icon: TextureRect = $UI/NextRow/Icon
 @onready var sound_toggle_btn: TextureButton = $UI/SoundToggleButton
 @onready var pause_button: TextureButton = $UI/PauseButton
+@onready var info_button: TextureButton = $UI/InfoButton
+@onready var sequence_panel: Control = $UI/SequencePanel
 @onready var pause_panel: Control = $UI/PausePanel
 @onready var pause_main_buttons: VBoxContainer = $UI/PausePanel/CenterContainer/MainButtons
 @onready var pause_resume_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/ResumeButton
@@ -84,6 +113,7 @@ func _ready() -> void:
 	continue_btn.pressed.connect(_on_continue_pressed)
 	sound_toggle_btn.pressed.connect(_on_sound_toggle_pressed)
 	pause_button.pressed.connect(_on_pause_pressed)
+	info_button.pressed.connect(_on_info_pressed)
 	pause_resume_btn.pressed.connect(_on_pause_resume_pressed)
 	pause_restart_btn.pressed.connect(_on_pause_restart_pressed)
 	pause_settings_btn.pressed.connect(_on_pause_settings_pressed)
@@ -91,6 +121,7 @@ func _ready() -> void:
 	confirm_restart_yes_btn.pressed.connect(_on_confirm_restart_yes)
 	confirm_cancel_btn.pressed.connect(_on_confirm_restart_cancel)
 	pause_settings_panel.closed.connect(_on_pause_settings_closed)
+	sequence_panel.closed.connect(_on_sequence_panel_closed)
 	_update_sound_icon()
 	music.finished.connect(func(): music.play())
 	randomize()
@@ -100,8 +131,13 @@ func _ready() -> void:
 	pause_settings_panel.visible = false
 	legendary_banner.visible = false
 	tutorial_panel.visible = false
+	sequence_panel.visible = false
+	current_level_index = _random_spawn_level()
 	next_level_index = _random_spawn_level()
 	_update_preview()
+	# GameManager.reset() emits score_changed before the connect above, so
+	# seed the HUD label once here (also picks the right locale on boot).
+	_on_score_changed(GameManager.score)
 
 	if not GameManager.has_seen_tutorial:
 		tutorial_panel.open()
@@ -112,12 +148,32 @@ func _ready() -> void:
 ## whatever the actual viewport turns out to be -- otherwise anything
 ## set up assuming a 720x1280 canvas (walls at x=680, floor at y=1200,
 ## ...) simply falls outside a smaller one and is never seen.
+## GameplayRoot itself is left unscaled/unpositioned (identity transform)
+## on purpose: it -- and everything under it, including the dino/wall/
+## floor physics bodies -- lives directly in "design space" units, which
+## this function makes equal to world space 1:1. The fit-to-viewport
+## zoom happens only at the camera, which is a pure rendering-time
+## transform and so is the one place this adjustment can live without
+## quietly breaking physics bodies (see the _game_scale comment above).
 func _fit_gameplay_to_viewport() -> void:
 	var vp_size := get_viewport_rect().size
-	var scale_factor: float = min(vp_size.x / DESIGN_SIZE.x, vp_size.y / DESIGN_SIZE.y)
-	gameplay_root.scale = Vector2(scale_factor, scale_factor)
-	gameplay_root.position = (vp_size - DESIGN_SIZE * scale_factor) / 2.0
-	GameManager.danger_line_y = gameplay_root.to_global(Vector2(0, DANGER_LINE_Y_DESIGN)).y
+	var available_height: float = max(vp_size.y - TOP_UI_MARGIN, 1.0)
+	_game_scale = min(vp_size.x / DESIGN_SIZE.x, available_height / DESIGN_SIZE.y)
+	camera.zoom = Vector2(_game_scale, _game_scale)
+	# Center horizontally as before, but any vertical slack is only ever
+	# added *below* TOP_UI_MARGIN, never eating into it -- otherwise a
+	# device whose aspect ratio leaves little slack could still let the
+	# pit creep back up under the TopBar. Camera2D's anchor_mode is
+	# FIXED_TOP_LEFT (set on the node), so `camera.position` maps to the
+	# viewport's top-left corner, not its center -- these formulas are
+	# the inverse of `screen = (world - camera.position) * zoom`, solved
+	# for the camera.position that puts design (360, 0) at screen
+	# (vp_size.x/2, TOP_UI_MARGIN + extra_height/2).
+	var extra_height: float = available_height - DESIGN_SIZE.y * _game_scale
+	camera.position = Vector2(
+		360.0 - (vp_size.x / 2.0) / _game_scale, -(TOP_UI_MARGIN + extra_height / 2.0) / _game_scale
+	)
+	GameManager.danger_line_y = DANGER_LINE_Y_DESIGN
 
 
 func _random_spawn_level() -> int:
@@ -146,14 +202,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Touch/mouse positions arrive in real viewport pixels; gameplay
-## coordinates (LEFT_X..RIGHT_X) are in GameplayRoot's fixed design
-## space, so convert before using them.
+## coordinates (LEFT_X..RIGHT_X) are design/world-space, mapped to the
+## viewport only by the camera's zoom/position -- this is the inverse of
+## that same `screen = (world - camera.position) * zoom` mapping used in
+## _fit_gameplay_to_viewport.
 func _to_gameplay_x(viewport_x: float) -> float:
-	return gameplay_root.to_local(Vector2(viewport_x, 0)).x
+	return camera.position.x + viewport_x / _game_scale
 
 
 func _move_preview(x: float) -> void:
-	var radius := DinoChain.get_level(next_level_index).radius
+	var radius := DinoChain.get_level(current_level_index).radius
 	preview_x = clamp(x, LEFT_X + radius, RIGHT_X - radius)
 	spawner_preview.position.x = preview_x
 
@@ -165,15 +223,13 @@ func _drop() -> void:
 	var dino := DINO_SCENE.instantiate()
 	dinos.add_child(dino)
 	dino.add_to_group("dino")
-	# preview_x/SPAWN_Y are in GameplayRoot's local design space (same as
-	# spawner_preview.position, which tracks the drag correctly) -- must
-	# go through to_global() before assigning global_position, otherwise
-	# this only lines up when the runtime scale/offset happens to be
-	# identity, and drifts right/down from the actual drag position by
-	# more the further GameplayRoot's fit differs from 1:1.
-	dino.global_position = gameplay_root.to_global(Vector2(preview_x, SPAWN_Y))
-	dino.setup(next_level_index)
+	# preview_x/SPAWN_Y are already world-space (== design-space, since
+	# GameplayRoot is unscaled -- see _fit_gameplay_to_viewport), same as
+	# spawner_preview.position, so no conversion is needed here.
+	dino.global_position = Vector2(preview_x, SPAWN_Y)
+	dino.setup(current_level_index)
 	drop_sfx.play()
+	current_level_index = next_level_index
 	next_level_index = _random_spawn_level()
 	_update_preview()
 	await get_tree().create_timer(0.45).timeout
@@ -181,12 +237,14 @@ func _drop() -> void:
 
 
 func _update_preview() -> void:
-	spawner_preview.set_level(next_level_index)
+	spawner_preview.set_level(current_level_index)
 	spawner_preview.position.x = preview_x
-	next_label.text = "Próximo: " + DinoChain.get_level(next_level_index).dino_name
+	next_icon.texture = DinoChain.get_level(next_level_index).texture
 
 
-func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> void:
+func spawn_merged_dino(
+	index: int, global_pos: Vector2, score_awarded: int, combo_count: int = 1
+) -> void:
 	var dino := DINO_SCENE.instantiate()
 	dinos.add_child(dino)
 	dino.add_to_group("dino")
@@ -195,13 +253,19 @@ func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> v
 	dino.play_spawn_bounce()
 
 	# Pitch (and a touch of volume) climbs with the merged level, so a
-	# low-tier merge sounds subtly different from a top-of-the-chain one.
+	# low-tier merge sounds subtly different from a top-of-the-chain one
+	# -- plus an extra rising bump per chained combo step, same idea as
+	# the level pitch but keyed to combo instead, so a fast cascade
+	# audibly "climbs" merge to merge. Clamped so a long combo doesn't
+	# end up an inaudible chipmunk squeal.
 	var level_fraction := float(index) / float(DinoChain.level_count() - 1)
-	merge_sfx.pitch_scale = 1.0 + level_fraction * 1.1
+	merge_sfx.pitch_scale = clampf(1.0 + level_fraction * 1.1 + 0.12 * (combo_count - 1), 0.5, 2.5)
 	merge_sfx.volume_db = level_fraction * 4.0
 	merge_sfx.play()
 
 	_spawn_floating_score(global_pos, score_awarded)
+	if combo_count >= 2:
+		_spawn_combo_text(global_pos, combo_count)
 	_spawn_merge_particles(global_pos, index)
 
 	# Subtle by default, stronger the higher the merged level -- and the
@@ -217,10 +281,56 @@ func spawn_merged_dino(index: int, global_pos: Vector2, score_awarded: int) -> v
 		_show_legendary_banner()
 
 
+## Soft glow that blooms at the meeting point while the two merging
+## dinos slide together (see dino.gd's _do_merge's approach tween) --
+## builds anticipation into the sharper spawn_merge_flash() burst that
+## fires right after, so the merge reads as "charging up, then
+## releasing" instead of a flat instant swap. Additive-blended (same
+## trick as icon_glow.gd) so it brightens what's behind it like a real
+## light bloom rather than covering it with a flat colored disc.
+func spawn_pre_merge_glow(global_pos: Vector2, duration: float) -> void:
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(1.0, 0.85, 0.5, 1.0))
+	gradient.set_color(1, Color(1.0, 0.85, 0.5, 0.0))
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 96
+	tex.height = 96
+
+	var glow := Sprite2D.new()
+	gameplay_root.add_child(glow)
+	glow.texture = tex
+	glow.global_position = global_pos
+	glow.modulate.a = 0.0
+	glow.scale = Vector2(0.25, 0.25)
+	glow.z_index = 9
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow.material = mat
+
+	var tween := create_tween()
+	tween.tween_property(glow, "modulate:a", 0.9, duration).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_IN
+	)
+	(
+		tween
+		. parallel()
+		. tween_property(glow, "scale", Vector2(0.95, 0.95), duration)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	tween.tween_property(glow, "modulate:a", 0.0, 0.12)
+	tween.tween_callback(glow.queue_free)
+
+
 ## Quick expanding radial flash at the merge point, played right as the
 ## two source dinos vanish and the merged one is born -- masks that
 ## swap instant with a "morph" pulse instead of a bare pop. Built from a
-## GradientTexture2D purely in code, no art asset needed.
+## GradientTexture2D purely in code, no art asset needed. Additive-
+## blended for a real bloom/glow look instead of a flat white disc.
 func spawn_merge_flash(global_pos: Vector2) -> void:
 	var gradient := Gradient.new()
 	gradient.set_color(0, Color(1.0, 1.0, 0.9, 1.0))
@@ -240,17 +350,20 @@ func spawn_merge_flash(global_pos: Vector2) -> void:
 	flash.modulate.a = 0.0
 	flash.scale = Vector2(0.3, 0.3)
 	flash.z_index = 10
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	flash.material = mat
 
 	var tween := create_tween()
 	tween.tween_property(flash, "modulate:a", 1.0, 0.05)
 	(
 		tween
 		. parallel()
-		. tween_property(flash, "scale", Vector2(1.4, 1.4), 0.18)
+		. tween_property(flash, "scale", Vector2(1.7, 1.7), 0.2)
 		. set_trans(Tween.TRANS_QUAD)
 		. set_ease(Tween.EASE_OUT)
 	)
-	tween.tween_property(flash, "modulate:a", 0.0, 0.15)
+	tween.tween_property(flash, "modulate:a", 0.0, 0.16)
 	tween.tween_callback(flash.queue_free)
 
 
@@ -259,6 +372,21 @@ func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:
 	gameplay_root.add_child(popup)
 	popup.global_position = global_pos + Vector2(0, -20)
 	popup.text = "+%d" % amount
+
+
+## "COMBO xN!" callout for a chained merge (combo_count >= 2), reusing
+## the same disposable popup as the score number but offset above it so
+## the two don't overlap. Scale and color both ramp with combo_count,
+## capped at the same combo tier (5) the score multiplier caps at --
+## past that point a bigger combo doesn't need to shout any louder.
+func _spawn_combo_text(global_pos: Vector2, combo_count: int) -> void:
+	var popup := FLOATING_SCORE_SCENE.instantiate()
+	gameplay_root.add_child(popup)
+	popup.global_position = global_pos + Vector2(0, -46)
+	popup.text = Loc.t("HUD_COMBO", {"count": combo_count})
+	var t := clampf(float(combo_count - 2) / 3.0, 0.0, 1.0)  # 0 at combo 2, 1 at combo 5+
+	popup.color = Color.from_hsv(lerpf(0.13, 0.0, t), 0.85, 1.0)
+	popup.scale = Vector2.ONE * (1.0 + 0.15 * lerpf(0.0, 4.0, t))
 
 
 func _spawn_merge_particles(global_pos: Vector2, index: int) -> void:
@@ -343,6 +471,9 @@ func _handle_back_button() -> void:
 	if tutorial_panel.visible:
 		tutorial_panel.dismiss()
 		return
+	if sequence_panel.visible:
+		sequence_panel.dismiss()
+		return
 	if pause_settings_panel.visible:
 		pause_settings_panel.close()
 		return
@@ -355,6 +486,15 @@ func _handle_back_button() -> void:
 	if GameManager.is_game_over:
 		return
 	_on_pause_pressed()
+
+
+## Opens the reference screen listing every dino in merge order (see
+## sequence_panel.gd) -- pauses like PausePanel so the pile doesn't keep
+## falling/merging while the player is just checking the chain.
+func _on_info_pressed() -> void:
+	ui_click_sfx.play()
+	get_tree().paused = true
+	sequence_panel.open()
 
 
 func _on_pause_pressed() -> void:
@@ -401,6 +541,14 @@ func _on_pause_settings_pressed() -> void:
 
 func _on_pause_settings_closed() -> void:
 	pause_main_buttons.visible = true
+	# Settings is the only in-run way to change language; the static labels
+	# auto-translate but the score label is code-built, so refresh it here
+	# (it's still hidden behind the pause overlay at this point).
+	score_label.text = Loc.t("HUD_SCORE", {"score": GameManager.score})
+
+
+func _on_sequence_panel_closed() -> void:
+	get_tree().paused = false
 
 
 func _on_pause_menu_pressed() -> void:
@@ -412,7 +560,7 @@ func _on_pause_menu_pressed() -> void:
 
 
 func _on_score_changed(new_score: int) -> void:
-	score_label.text = "Pontos: %d" % new_score
+	score_label.text = Loc.t("HUD_SCORE", {"score": new_score})
 	_update_background(new_score)
 
 
@@ -438,13 +586,14 @@ func _update_background(current_score: int) -> void:
 
 
 func _on_game_over() -> void:
-	final_score_label.text = "Pontuação final: %d" % GameManager.score
-	best_label.text = "Recorde pessoal: %d" % GameManager.high_score
+	final_score_label.text = Loc.t("GAMEOVER_FINAL_SCORE", {"score": GameManager.score})
+	best_label.text = Loc.t("GAMEOVER_BEST_SCORE", {"score": GameManager.high_score})
 	record_label.visible = GameManager.is_new_record
 	continue_btn.visible = AdsManager.is_rewarded_ad_ready()
 	continue_btn.disabled = false
 	restart_button.disabled = false
 	pause_button.visible = false
+	info_button.visible = false
 
 	if GameManager.is_new_record:
 		record_sfx.play()
@@ -485,7 +634,9 @@ func _on_rewarded_continue_result(earned: bool) -> void:
 	GameManager.continue_run()
 	game_over_panel.visible = false
 	pause_button.visible = true
+	info_button.visible = true
 	can_drop = true
+	current_level_index = _random_spawn_level()
 	next_level_index = _random_spawn_level()
 	_update_preview()
 

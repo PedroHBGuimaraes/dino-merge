@@ -20,3 +20,10 @@ extends Resource
 ## size monotonic with `radius`. Defaults to 64 (= old behavior) when
 ## a species has no measured value.
 @export var content_size: float = 64.0
+## Convex hull of the sprite's real alpha silhouette (pixel-space,
+## centered on the 64x64 canvas), generated from assets/dino/collision_data.json.
+## A single shape, not a multi-piece decomposition -- see tools/gen_collision.gd
+## for why (compound colliders caused real physics explosions once dinos
+## could rotate freely). Empty when a species has no measured data --
+## dino.gd falls back to a circle sized by `radius` in that case.
+@export var collision_hull: PackedVector2Array = PackedVector2Array()

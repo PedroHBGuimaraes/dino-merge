@@ -5,6 +5,8 @@ extends Resource
 ## display data.
 
 @export var id: String = ""
+## Translation keys (see translations.csv), not literal text -- resolved
+## with tr() by achievements_screen.gd at render time.
 @export var title: String = ""
 @export var description: String = ""
 @export var icon: Texture2D

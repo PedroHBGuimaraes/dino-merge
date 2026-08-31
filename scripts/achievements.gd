@@ -1,10 +1,14 @@
 extends Node
 
-## Static catalog of every achievement (id, display text, icon), built
+## Static catalog of every achievement (id, translation keys, icon), built
 ## once from the curated list below. GameManager owns which ids are
 ## actually unlocked (persisted); this is just the shared definition
 ## both GameManager (to check thresholds) and AchievementsScreen (to
 ## render the list) read from -- same split as DinoChain vs. DinoLevel.
+##
+## `title`/`description` hold translation KEYS (see translations.csv), not
+## literal text -- AchievementsScreen resolves them with tr() at render
+## time so the list follows a runtime language switch.
 
 const ASSET_DIR := "res://assets/ui/achievements"
 
@@ -21,53 +25,53 @@ const MERGES_THRESHOLD := 100
 const DEFS := [
 	{
 		"id": "first_merge",
-		"title": "Primeira Fusão",
-		"description": "Funda dois dinos pela primeira vez.",
+		"title": "ACH_FIRST_MERGE_NAME",
+		"description": "ACH_FIRST_MERGE_DESC",
 	},
 	{
 		"id": "triceratops",
-		"title": "Triceratops!",
-		"description": "Crie um Triceratops fundindo dois Ouranosaurus.",
+		"title": "ACH_TRICERATOPS_NAME",
+		"description": "ACH_TRICERATOPS_DESC",
 	},
 	{
 		"id": "trex",
-		"title": "T-Rex!",
-		"description": "Crie um Tiranossauro Rex através de uma fusão.",
+		"title": "ACH_TREX_NAME",
+		"description": "ACH_TREX_DESC",
 	},
 	{
 		"id": "legendary",
-		"title": "Lendário",
-		"description": "Crie o Mosasaurus, o maior de todos os dinos.",
+		"title": "ACH_LEGENDARY_NAME",
+		"description": "ACH_LEGENDARY_DESC",
 	},
 	{
 		"id": "score_500",
-		"title": "Recorde: 500",
-		"description": "Alcance 500 pontos em uma única partida.",
+		"title": "ACH_SCORE_500_NAME",
+		"description": "ACH_SCORE_500_DESC",
 	},
 	{
 		"id": "score_1500",
-		"title": "Recorde: 1500",
-		"description": "Alcance 1500 pontos em uma única partida.",
+		"title": "ACH_SCORE_1500_NAME",
+		"description": "ACH_SCORE_1500_DESC",
 	},
 	{
 		"id": "score_3000",
-		"title": "Recorde: 3000",
-		"description": "Alcance 3000 pontos em uma única partida.",
+		"title": "ACH_SCORE_3000_NAME",
+		"description": "ACH_SCORE_3000_DESC",
 	},
 	{
 		"id": "games_10",
-		"title": "Explorador",
-		"description": "Jogue 10 partidas.",
+		"title": "ACH_GAMES_10_NAME",
+		"description": "ACH_GAMES_10_DESC",
 	},
 	{
 		"id": "games_50",
-		"title": "Veterano",
-		"description": "Jogue 50 partidas.",
+		"title": "ACH_GAMES_50_NAME",
+		"description": "ACH_GAMES_50_DESC",
 	},
 	{
 		"id": "merges_100",
-		"title": "Mestre da Fusão",
-		"description": "Realize 100 fusões ao todo.",
+		"title": "ACH_MERGES_100_NAME",
+		"description": "ACH_MERGES_100_DESC",
 	},
 ]
 

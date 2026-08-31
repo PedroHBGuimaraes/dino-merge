@@ -12,9 +12,8 @@ one line to the array.
 
 ## 1. Sprite
 
-The chain only uses the **adult** sprite per species (`_filhote`/
-`_jovem` stages exist in `assets/dino/` from an earlier prototype but
-aren't currently wired into this game). Place the new sprite at:
+The chain uses one sprite per species, the "adult" pose. Place the new
+sprite at:
 
 ```
 assets/dino/dino_<species_id>_adulto.png
@@ -49,12 +48,40 @@ position in `SPECIES`, so inserting a name is enough to reflow the
 whole chain. Note that inserting (rather than appending) shifts every
 later level's size/score by one step, which is expected.
 
-## 3. Sanity check
+## 3. Regenerate the collider
+
+Each species' RigidBody2D collider is a single convex hull traced from
+its sprite's real silhouette (not a plain circle — see
+`scripts/dino_chain.gd`'s `_load_collision_data`/`collision_hull` and
+`scripts/dino.gd`'s `setup()`), stored in
+`assets/dino/collision_data.json`. A new species has no entry there
+until you regenerate it:
+
+```
+godot --headless --path . --script res://tools/gen_collision.gd
+```
+
+(substitute the full path to your Godot 4.6 executable if `godot`
+isn't on PATH)
+
+This rebuilds the file for *all* species from their current
+`_adulto.png` files (a few seconds). Without this step the new dino
+falls back to a plain circle collider sized by `radius` — it'll still
+work, just without the flush-to-sprite fit the others have.
+
+## 4. Sanity check
 
 - Confirm `assets/dino/dino_<species_id>_adulto.png` exists and the
   filename matches the `species_id` exactly (the loader in
   `dino_chain.gd`'s `_try_load_texture` builds the path from the id —
   a typo means silent fallback to the placeholder circle, not an
   error).
+- Check the regen tool printed a line for the new species: `hull_pts=N
+  area%=NN`. `area%` runs well over 100 (~115-230% — a convex hull
+  covers the concave gaps in the silhouette too); what matters is that
+  the line appears and `hull_pts` is a sane single-digit-ish count. If
+  you instead see `no usable silhouette for <species>` (no line for
+  it), the sprite's alpha shape is too thin/noisy for the current
+  EPSILON; see the comment at the top of `tools/gen_collision.gd`.
 - If you have `gdlint` available, it runs automatically via this
   project's PostToolUse hook after you edit `dino_chain.gd`.

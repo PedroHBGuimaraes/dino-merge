@@ -37,6 +37,9 @@ func _on_back_pressed() -> void:
 	close()
 
 
+## Rows are rebuilt on every open() and their text comes from tr() at build
+## time, so a language changed elsewhere is already reflected next time the
+## screen opens (it can't change while the screen is visible).
 func _rebuild_list() -> void:
 	for child in list_container.get_children():
 		child.queue_free()
@@ -64,7 +67,7 @@ func _build_row(achievement: Achievement) -> Control:
 	text_box.add_theme_constant_override("separation", 2)
 
 	var title := Label.new()
-	title.text = achievement.title
+	title.text = tr(achievement.title)
 	title.add_theme_font_size_override("font_size", 19)
 	title.add_theme_color_override(
 		"font_color", UNLOCKED_TITLE_COLOR if unlocked else LOCKED_TITLE_COLOR
@@ -72,7 +75,7 @@ func _build_row(achievement: Achievement) -> Control:
 	text_box.add_child(title)
 
 	var desc := Label.new()
-	desc.text = achievement.description
+	desc.text = tr(achievement.description)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
 	desc.add_theme_font_size_override("font_size", 14)
 	desc.add_theme_color_override(

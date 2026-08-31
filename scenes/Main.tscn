@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://bqmerge0main"]
+[gd_scene load_steps=26 format=3 uid="uid://bqmerge0main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/spawner_preview.gd" id="2"]
@@ -23,12 +23,25 @@
 [ext_resource type="Texture2D" path="res://assets/dino/dino_compsognathus_adulto.png" id="21"]
 [ext_resource type="Texture2D" path="res://assets/dino/dino_dimorphodon_adulto.png" id="22"]
 [ext_resource type="Script" path="res://scripts/tutorial_panel.gd" id="23"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_play.png" id="24"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/icon_info.png" id="25"]
+[ext_resource type="Script" path="res://scripts/sequence_panel.gd" id="26"]
+[ext_resource type="Texture2D" path="res://assets/ui/merge/glow_dot.png" id="27"]
+[ext_resource type="Script" path="res://scripts/icon_glow.gd" id="28"]
+[ext_resource type="Script" path="res://scripts/parallax_sky.gd" id="29"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(20, 1140)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
 size = Vector2(660, 20)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+bg_color = Color(0.09, 0.05, 0.03, 0.68)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1")
@@ -48,9 +61,20 @@ texture = ExtResource("3")
 expand_mode = 1
 stretch_mode = 6
 
+[node name="SkyLayer" type="CanvasLayer" parent="."]
+script = ExtResource("29")
+
 [node name="GameplayRoot" type="Node2D" parent="."]
 
 [node name="Container" type="Node2D" parent="GameplayRoot"]
+
+[node name="InteriorScrim" type="ColorRect" parent="GameplayRoot/Container"]
+offset_left = 40.0
+offset_top = 0.0
+offset_right = 680.0
+offset_bottom = 1190.0
+mouse_filter = 2
+color = Color(0.05, 0.03, 0.02, 0.4)
 
 [node name="WallLeft" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(40, 630)
@@ -156,6 +180,14 @@ bus = &"SFX"
 
 [node name="UI" type="CanvasLayer" parent="."]
 
+[node name="TopBar" type="Panel" parent="UI"]
+mouse_filter = 2
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 320.0
+offset_bottom = 94.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
 [node name="ScoreRow" type="HBoxContainer" parent="UI"]
 offset_left = 24.0
 offset_top = 16.0
@@ -175,16 +207,40 @@ layout_mode = 2
 size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 28
-text = "Pontos: 0"
+text = "HUD_SCORE"
 
-[node name="NextLabel" type="Label" parent="UI"]
+[node name="NextRow" type="HBoxContainer" parent="UI"]
 offset_left = 24.0
-offset_top = 60.0
+offset_top = 58.0
 offset_right = 400.0
-offset_bottom = 86.0
+offset_bottom = 90.0
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="UI/NextRow"]
+layout_mode = 2
+size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 16
-text = "Próximo: "
+text = "HUD_NEXT"
+
+[node name="Icon" type="TextureRect" parent="UI/NextRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SoundGlow" type="TextureRect" parent="UI"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -80.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 80.0
+mouse_filter = 2
+texture = ExtResource("27")
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("28")
 
 [node name="SoundToggleButton" type="TextureButton" parent="UI"]
 anchor_left = 1.0
@@ -197,6 +253,19 @@ texture_normal = ExtResource("11")
 ignore_texture_size = true
 stretch_mode = 4
 
+[node name="PauseGlow" type="TextureRect" parent="UI"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -128.0
+offset_top = -8.0
+offset_right = -40.0
+offset_bottom = 80.0
+mouse_filter = 2
+texture = ExtResource("27")
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("28")
+
 [node name="PauseButton" type="TextureButton" parent="UI"]
 anchor_left = 1.0
 anchor_right = 1.0
@@ -205,6 +274,30 @@ offset_top = 16.0
 offset_right = -64.0
 offset_bottom = 56.0
 texture_normal = ExtResource("16")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="InfoGlow" type="TextureRect" parent="UI"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -176.0
+offset_top = -8.0
+offset_right = -88.0
+offset_bottom = 80.0
+mouse_filter = 2
+texture = ExtResource("27")
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("28")
+
+[node name="InfoButton" type="TextureButton" parent="UI"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -152.0
+offset_top = 16.0
+offset_right = -112.0
+offset_bottom = 56.0
+texture_normal = ExtResource("25")
 ignore_texture_size = true
 stretch_mode = 4
 
@@ -234,20 +327,20 @@ alignment = 1
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
-text = "Fim de Jogo!"
+text = "GAMEOVER_TITLE"
 
 [node name="FinalScoreLabel" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
-text = "Pontuação final: 0"
+text = "GAMEOVER_FINAL_SCORE"
 
 [node name="NewRecordLabel" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 visible = false
 theme_override_colors/font_color = Color(1, 0.84, 0, 1)
 theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
-text = "🏆 Novo recorde!"
+text = "GAMEOVER_NEW_RECORD"
 
 [node name="HighScoreRow" type="HBoxContainer" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -267,22 +360,56 @@ layout_mode = 2
 size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.86, 0.76, 0.6, 1)
 theme_override_font_sizes/font_size = 20
-text = "Recorde pessoal: 0"
+text = "GAMEOVER_BEST_SCORE"
 
 [node name="ContinueButton" type="Button" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 visible = false
 custom_minimum_size = Vector2(280, 56)
-icon = ExtResource("9")
-expand_icon = true
-theme_override_constants/icon_max_width = 32
-text = "Assistir anúncio e continuar"
+
+[node name="Content" type="HBoxContainer" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/ContinueButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/ContinueButton/Content"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("9")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/ContinueButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "GAMEOVER_CONTINUE_AD"
 
 [node name="RestartButton" type="Button" parent="UI/GameOverPanel/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(220, 56)
-icon = ExtResource("10")
-expand_icon = true
-theme_override_constants/icon_max_width = 28
-text = "Jogar novamente"
+
+[node name="Content" type="HBoxContainer" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/RestartButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/RestartButton/Content"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/GameOverPanel/CenterContainer/VBoxContainer/RestartButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "GAMEOVER_RESTART"
 
 [node name="PausePanel" type="Control" parent="UI"]
 visible = false
@@ -312,35 +439,103 @@ alignment = 1
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 36
 horizontal_alignment = 1
-text = "Pausado"
+text = "PAUSE_TITLE"
 
 [node name="ResumeButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
-icon = ExtResource("5")
-expand_icon = true
-theme_override_constants/icon_max_width = 28
-text = "Continuar"
+
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/ResumeButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/ResumeButton/Content"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("24")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/ResumeButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "PAUSE_RESUME"
 
 [node name="RestartButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
-icon = ExtResource("10")
-expand_icon = true
-theme_override_constants/icon_max_width = 28
-text = "Reiniciar"
+
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/RestartButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/RestartButton/Content"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/RestartButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "PAUSE_RESTART"
 
 [node name="SettingsButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
-icon = ExtResource("18")
-expand_icon = true
-theme_override_constants/icon_max_width = 28
-text = "Configurações"
+
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/SettingsButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/SettingsButton/Content"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/SettingsButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "SETTINGS_TITLE"
 
 [node name="MenuButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
-icon = ExtResource("17")
-expand_icon = true
-theme_override_constants/icon_max_width = 28
-text = "Voltar ao menu"
+
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/MenuButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/MenuButton/Content"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/MenuButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "PAUSE_MENU"
 
 [node name="ConfirmPanel" type="Control" parent="UI/PausePanel"]
 visible = false
@@ -371,15 +566,15 @@ theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Tem certeza? Isso vai encerrar a partida atual."
+text = "PAUSE_CONFIRM_RESTART"
 
 [node name="YesButton" type="Button" parent="UI/PausePanel/ConfirmPanel/Center/Box"]
 custom_minimum_size = Vector2(240, 56)
-text = "Sim, reiniciar"
+text = "PAUSE_CONFIRM_YES"
 
 [node name="CancelButton" type="Button" parent="UI/PausePanel/ConfirmPanel/Center/Box"]
 custom_minimum_size = Vector2(240, 56)
-text = "Cancelar"
+text = "COMMON_CANCEL"
 
 [node name="SettingsPanel" parent="UI/PausePanel" instance=ExtResource("19")]
 visible = false
@@ -394,7 +589,7 @@ theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 44
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "🦖 LENDÁRIO! 🦖"
+text = "LEGENDARY_BANNER"
 
 [node name="TutorialPanel" type="Control" parent="UI"]
 visible = false
@@ -438,7 +633,7 @@ theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Toque e arraste para escolher onde soltar o dino. Solte para deixá-lo cair."
+text = "TUTORIAL_STEP1"
 
 [node name="Step2" type="VBoxContainer" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
 visible = false
@@ -488,15 +683,63 @@ theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 autowrap_mode = 3
-text = "Dois dinos do mesmo nível que se tocam se fundem no próximo da cadeia!"
+text = "TUTORIAL_STEP2"
 
 [node name="NextButton" type="Button" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(200, 56)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Próximo"
+text = "TUTORIAL_NEXT"
 
 [node name="SkipButton" type="Button" parent="UI/TutorialPanel/CenterContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Pular"
+text = "TUTORIAL_SKIP"
+
+[node name="SequencePanel" type="Control" parent="UI"]
+visible = false
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("26")
+
+[node name="Overlay" type="ColorRect" parent="UI/SequencePanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.05, 0.03, 0.88)
+
+[node name="CenterContainer" type="CenterContainer" parent="UI/SequencePanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/SequencePanel/CenterContainer"]
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="UI/SequencePanel/CenterContainer/VBoxContainer"]
+theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+text = "SEQUENCE_TITLE"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/SequencePanel/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(320, 420)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Grid" type="GridContainer" parent="UI/SequencePanel/CenterContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 12
+
+[node name="CloseButton" type="Button" parent="UI/SequencePanel/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "COMMON_CLOSE"

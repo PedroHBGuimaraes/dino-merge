@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://cmainmenu0scene"]
+[gd_scene load_steps=12 format=3 uid="uid://cmainmenu0scene"]
 
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/scenes/bg_crater.png" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/SettingsPanel.tscn" id="8"]
 [ext_resource type="Texture2D" path="res://assets/ui/merge/icon_achievements.png" id="9"]
 [ext_resource type="Script" path="res://scripts/achievements_screen.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/parallax_sky.gd" id="11"]
 
 [node name="MainMenu" type="Control"]
 anchors_preset = 15
@@ -24,6 +25,9 @@ anchor_bottom = 1.0
 texture = ExtResource("2")
 expand_mode = 1
 stretch_mode = 6
+
+[node name="SkyLayer" type="CanvasLayer" parent="."]
+script = ExtResource("11")
 
 [node name="Dim" type="ColorRect" parent="."]
 anchors_preset = 15
@@ -58,7 +62,7 @@ text = "DINO MERGE"
 theme_override_colors/font_color = Color(0.86, 0.76, 0.6, 1)
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
-text = "Cânion dos Fósseis"
+text = "MENU_SUBTITLE"
 
 [node name="HighScoreRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -78,7 +82,7 @@ layout_mode = 2
 size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
-text = "Recorde: 0"
+text = "MENU_HIGH_SCORE"
 
 [node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 12)
@@ -88,11 +92,28 @@ layout_mode = 2
 custom_minimum_size = Vector2(240, 64)
 layout_mode = 2
 size_flags_horizontal = 4
+
+[node name="Content" type="HBoxContainer" parent="CenterContainer/VBoxContainer/PlayButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="CenterContainer/VBoxContainer/PlayButton/Content"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/PlayButton/Content"]
+layout_mode = 2
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 22
-icon = ExtResource("5")
-expand_icon = true
-theme_override_constants/icon_max_width = 30
-text = "Jogar"
+text = "MENU_PLAY"
 
 [node name="ButtonRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -153,7 +174,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
-text = "Conquistas"
+text = "ACHIEVEMENTS_TITLE"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="AchievementsScreen/Margin/VBox"]
 layout_mode = 2
@@ -168,4 +189,4 @@ theme_override_constants/separation = 18
 custom_minimum_size = Vector2(200, 56)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Voltar"
+text = "COMMON_BACK"

@@ -10,6 +10,32 @@ esforço.
 
 ---
 
+## Progresso (2026-08-31)
+
+Executado na ordem sugerida. Commits em `master`:
+
+- **P0** (`341d0f6`) — B1 áudio persiste, B2 toast de conquista in-run,
+  B4 janela de combo 1.5s→0.7s, B7 overlays opacos, B9 tutorial,
+  B10 screen shake, B5 remoção de órfãos. B3 verificado (viewport OK em
+  20:9 e 4:3, sem mudança de config).
+- **P1** (`30f9815`) — `scripts/pit.gd`: poço redesenhado (interior
+  opaco, chão, paredes com relevo + friso, sombra de topo, vinheta),
+  linha de perigo tracejada animada com chevrons, brilho de brasa por
+  tier dentro do poço.
+- **Evolução + Dinopédia** (`391605a`) — merge nasce filhote→jovem→adulto
+  (usa os 256 frames parados); painel de sequência com silhuetas dos não
+  descobertos + contador N/32; `discovered_species` persistido.
+- **Identidade** (`c2c3811`) — emblema (crânio de T-rex + ossos, PixelLab)
+  no menu no lugar do app_icon; fonte pixel `DinoMerge.ttf` no título;
+  game over com botão "Menu" e linha "Você chegou ao {espécie}".
+
+Pendente da lista abaixo: `~` = parcial, resto não iniciado.
+- U5 Dinopédia: silhuetas ✓, **falta** setas de progressão e fatos por espécie.
+- Fonte pixel: só no título (atlas sem acentos — não serve de fonte global).
+- Toda a P2 (juice), resto de P3, e P4.
+
+---
+
 ## P0 — Bugs e dívida técnica
 
 | # | Problema | Correção |

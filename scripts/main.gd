@@ -279,6 +279,7 @@ func spawn_merged_dino(
 	if combo_count >= 2:
 		_spawn_combo_text(global_pos, combo_count)
 	_spawn_merge_particles(global_pos, index)
+	_spawn_shockwave(global_pos, index)
 
 	# Subtle by default, stronger the higher the merged level -- and the
 	# very top of the chain gets a distinctly longer buzz on top of its
@@ -377,6 +378,48 @@ func spawn_merge_flash(global_pos: Vector2) -> void:
 	)
 	tween.tween_property(flash, "modulate:a", 0.0, 0.16)
 	tween.tween_callback(flash.queue_free)
+
+
+## Expanding ring that snaps out from the merge point -- a crisper,
+## directional companion to the soft radial flash. Built from a radial
+## GradientTexture2D (transparent core, bright annulus, transparent edge),
+## additive-blended, scaled up and faded in one short tween. Bigger and a
+## touch warmer the higher the merged level.
+func _spawn_shockwave(global_pos: Vector2, index: int) -> void:
+	var frac := float(index) / float(DinoChain.level_count() - 1)
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.62, 0.78, 1.0])
+	var ring := Color(1.0, lerpf(0.9, 0.6, frac), lerpf(0.7, 0.3, frac), 1.0)
+	gradient.colors = PackedColorArray([Color(ring, 0.0), Color(ring, 0.0), ring, Color(ring, 0.0)])
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 128
+	tex.height = 128
+
+	var wave := Sprite2D.new()
+	gameplay_root.add_child(wave)
+	wave.texture = tex
+	wave.global_position = global_pos
+	wave.z_index = 9
+	wave.scale = Vector2(0.2, 0.2)
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	wave.material = mat
+
+	var end_scale := 1.6 + frac * 1.8
+	var tween := create_tween()
+	tween.set_parallel(true)
+	(
+		tween
+		. tween_property(wave, "scale", Vector2(end_scale, end_scale), 0.34)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(wave, "modulate:a", 0.0, 0.34).set_trans(Tween.TRANS_SINE)
+	tween.chain().tween_callback(wave.queue_free)
 
 
 func _spawn_floating_score(global_pos: Vector2, amount: int) -> void:

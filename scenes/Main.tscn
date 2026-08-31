@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://bqmerge0main"]
+[gd_scene load_steps=28 format=3 uid="uid://bqmerge0main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/spawner_preview.gd" id="2"]
@@ -30,6 +30,7 @@
 [ext_resource type="Script" path="res://scripts/icon_glow.gd" id="28"]
 [ext_resource type="Script" path="res://scripts/parallax_sky.gd" id="29"]
 [ext_resource type="Script" path="res://scripts/achievement_toast.gd" id="30"]
+[ext_resource type="Script" path="res://scripts/pit.gd" id="31"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(20, 1140)
@@ -69,13 +70,8 @@ script = ExtResource("29")
 
 [node name="Container" type="Node2D" parent="GameplayRoot"]
 
-[node name="InteriorScrim" type="ColorRect" parent="GameplayRoot/Container"]
-offset_left = 40.0
-offset_top = 0.0
-offset_right = 680.0
-offset_bottom = 1190.0
-mouse_filter = 2
-color = Color(0.05, 0.03, 0.02, 0.4)
+[node name="PitVisual" type="Node2D" parent="GameplayRoot/Container"]
+script = ExtResource("31")
 
 [node name="WallLeft" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(40, 630)
@@ -85,20 +81,6 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GameplayRoot/Container/WallLeft"]
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="Fill" type="ColorRect" parent="GameplayRoot/Container/WallLeft"]
-offset_left = -10.0
-offset_top = -570.0
-offset_right = 10.0
-offset_bottom = 570.0
-color = Color(0.35, 0.19, 0.11, 0.92)
-
-[node name="Rim" type="ColorRect" parent="GameplayRoot/Container/WallLeft"]
-offset_left = 6.0
-offset_top = -570.0
-offset_right = 10.0
-offset_bottom = 570.0
-color = Color(0.85, 0.62, 0.28, 1)
-
 [node name="WallRight" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(680, 630)
 collision_layer = 1
@@ -107,20 +89,6 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GameplayRoot/Container/WallRight"]
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="Fill" type="ColorRect" parent="GameplayRoot/Container/WallRight"]
-offset_left = -10.0
-offset_top = -570.0
-offset_right = 10.0
-offset_bottom = 570.0
-color = Color(0.35, 0.19, 0.11, 0.92)
-
-[node name="Rim" type="ColorRect" parent="GameplayRoot/Container/WallRight"]
-offset_left = -10.0
-offset_top = -570.0
-offset_right = -6.0
-offset_bottom = 570.0
-color = Color(0.85, 0.62, 0.28, 1)
-
 [node name="Floor" type="StaticBody2D" parent="GameplayRoot/Container"]
 position = Vector2(360, 1200)
 collision_layer = 1
@@ -128,25 +96,6 @@ collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GameplayRoot/Container/Floor"]
 shape = SubResource("RectangleShape2D_floor")
-
-[node name="Fill" type="ColorRect" parent="GameplayRoot/Container/Floor"]
-offset_left = -330.0
-offset_top = -10.0
-offset_right = 330.0
-offset_bottom = 10.0
-color = Color(0.35, 0.19, 0.11, 0.92)
-
-[node name="Rim" type="ColorRect" parent="GameplayRoot/Container/Floor"]
-offset_left = -330.0
-offset_top = -10.0
-offset_right = 330.0
-offset_bottom = -6.0
-color = Color(0.85, 0.62, 0.28, 1)
-
-[node name="DangerLine" type="Line2D" parent="GameplayRoot/Container"]
-points = PackedVector2Array(40, 220, 680, 220)
-width = 3.0
-default_color = Color(1, 0.4, 0.05, 0.85)
 
 [node name="Dinos" type="Node2D" parent="GameplayRoot"]
 

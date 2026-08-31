@@ -69,6 +69,7 @@ var _shaking := false
 @onready var camera: Camera2D = $Camera2D
 @onready var background: TextureRect = $BackgroundLayer/Background
 @onready var gameplay_root: Node2D = $GameplayRoot
+@onready var pit_visual: Node2D = $GameplayRoot/Container/PitVisual
 @onready var dinos: Node2D = $GameplayRoot/Dinos
 @onready var spawner_preview: Node2D = $GameplayRoot/SpawnerPreview
 @onready var score_label: Label = $UI/ScoreRow/ScoreLabel
@@ -594,6 +595,9 @@ func _update_background(current_score: int) -> void:
 			background.texture = BG_MID
 		2:
 			background.texture = BG_HIGH
+	# The opaque pit hides most of that swap now -- the visible "heating up"
+	# is the ember glow inside the well (see pit.gd).
+	pit_visual.set_intensity(tier / 2.0)
 
 
 func _on_game_over() -> void:

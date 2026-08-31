@@ -40,6 +40,20 @@ func _run() -> void:
 		tut.visible = false
 	if _mode.begins_with("play") and _node.has_method("_drop"):
 		await _play()
+	elif _mode == "gameover":
+		await _play()
+		root.get_node_or_null("/root/GameManager").trigger_game_over()
+	elif _mode == "pause":
+		_node._on_pause_pressed()
+	elif _mode == "sequence":
+		_node._on_info_pressed()
+	elif _mode == "settings_game":
+		_node._on_pause_pressed()
+		_node._on_pause_settings_pressed()
+	elif _mode == "achievements":
+		_node.get_node("AchievementsScreen").open()
+	elif _mode == "settings_menu":
+		_node.get_node("SettingsPanel").open()
 	await create_timer(_warmup).timeout
 	var img := root.get_texture().get_image()
 	img.save_png(_out)

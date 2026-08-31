@@ -18,9 +18,9 @@ var _detail_icon: TextureRect
 var _detail_name: Label
 var _detail_fact: Label
 
-@onready var title_label: Label = $CenterContainer/VBoxContainer/TitleLabel
-@onready var grid: GridContainer = $CenterContainer/VBoxContainer/ScrollContainer/Grid
-@onready var close_button: Button = $CenterContainer/VBoxContainer/CloseButton
+@onready var title_label: Label = $CenterContainer/Panel/VBoxContainer/TitleLabel
+@onready var grid: GridContainer = $CenterContainer/Panel/VBoxContainer/ScrollContainer/Grid
+@onready var close_button: Button = $CenterContainer/Panel/VBoxContainer/CloseButton
 
 
 func _ready() -> void:

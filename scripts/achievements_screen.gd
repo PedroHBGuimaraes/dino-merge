@@ -10,12 +10,12 @@ signal closed
 
 const UNLOCKED_TITLE_COLOR := Color(0.97, 0.9, 0.76, 1)
 const UNLOCKED_DESC_COLOR := Color(0.8, 0.7, 0.55, 1)
-const LOCKED_TITLE_COLOR := Color(0.55, 0.5, 0.45, 1)
-const LOCKED_DESC_COLOR := Color(0.4, 0.37, 0.34, 1)
-const LOCKED_ICON_TINT := Color(0.05, 0.05, 0.05, 0.85)
+const LOCKED_TITLE_COLOR := Color(0.72, 0.66, 0.58, 1)
+const LOCKED_DESC_COLOR := Color(0.6, 0.55, 0.48, 1)
+const LOCKED_ICON_TINT := Color(0.08, 0.06, 0.05, 0.8)
 
-@onready var list_container: VBoxContainer = $Margin/VBox/ScrollContainer/List
-@onready var back_button: Button = $Margin/VBox/BackButton
+@onready var list_container: VBoxContainer = $Margin/Panel/VBox/ScrollContainer/List
+@onready var back_button: Button = $Margin/Panel/VBox/BackButton
 
 
 func _ready() -> void:

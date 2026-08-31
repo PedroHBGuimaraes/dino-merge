@@ -423,21 +423,23 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="MainButtons" type="VBoxContainer" parent="UI/PausePanel/CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="UI/PausePanel/CenterContainer"]
+
+[node name="MainButtons" type="VBoxContainer" parent="UI/PausePanel/CenterContainer/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons"]
+[node name="TitleLabel" type="Label" parent="UI/PausePanel/CenterContainer/Panel/MainButtons"]
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 36
 horizontal_alignment = 1
 text = "PAUSE_TITLE"
 
-[node name="ResumeButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+[node name="ResumeButton" type="Button" parent="UI/PausePanel/CenterContainer/Panel/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
 
-[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/ResumeButton"]
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/ResumeButton"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -445,7 +447,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 10
 
-[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/ResumeButton/Content"]
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/ResumeButton/Content"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 size_flags_vertical = 4
@@ -453,15 +455,15 @@ texture = ExtResource("24")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/ResumeButton/Content"]
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/ResumeButton/Content"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "PAUSE_RESUME"
 
-[node name="RestartButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+[node name="RestartButton" type="Button" parent="UI/PausePanel/CenterContainer/Panel/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
 
-[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/RestartButton"]
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/RestartButton"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -469,7 +471,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 10
 
-[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/RestartButton/Content"]
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/RestartButton/Content"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 size_flags_vertical = 4
@@ -477,15 +479,15 @@ texture = ExtResource("10")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/RestartButton/Content"]
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/RestartButton/Content"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "PAUSE_RESTART"
 
-[node name="SettingsButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+[node name="SettingsButton" type="Button" parent="UI/PausePanel/CenterContainer/Panel/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
 
-[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/SettingsButton"]
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/SettingsButton"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -493,7 +495,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 10
 
-[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/SettingsButton/Content"]
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/SettingsButton/Content"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 size_flags_vertical = 4
@@ -501,15 +503,15 @@ texture = ExtResource("18")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/SettingsButton/Content"]
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/SettingsButton/Content"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "SETTINGS_TITLE"
 
-[node name="MenuButton" type="Button" parent="UI/PausePanel/CenterContainer/MainButtons"]
+[node name="MenuButton" type="Button" parent="UI/PausePanel/CenterContainer/Panel/MainButtons"]
 custom_minimum_size = Vector2(240, 56)
 
-[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/MainButtons/MenuButton"]
+[node name="Content" type="HBoxContainer" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/MenuButton"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -517,7 +519,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 10
 
-[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/MainButtons/MenuButton/Content"]
+[node name="Icon" type="TextureRect" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/MenuButton/Content"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 size_flags_vertical = 4
@@ -525,7 +527,7 @@ texture = ExtResource("17")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/MainButtons/MenuButton/Content"]
+[node name="Label" type="Label" parent="UI/PausePanel/CenterContainer/Panel/MainButtons/MenuButton/Content"]
 layout_mode = 2
 size_flags_vertical = 4
 text = "PAUSE_MENU"
@@ -709,29 +711,31 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/SequencePanel/CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="UI/SequencePanel/CenterContainer"]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/SequencePanel/CenterContainer/Panel"]
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="UI/SequencePanel/CenterContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="UI/SequencePanel/CenterContainer/Panel/VBoxContainer"]
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 text = "SEQUENCE_TITLE"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="UI/SequencePanel/CenterContainer/VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/SequencePanel/CenterContainer/Panel/VBoxContainer"]
 custom_minimum_size = Vector2(320, 420)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="Grid" type="GridContainer" parent="UI/SequencePanel/CenterContainer/VBoxContainer/ScrollContainer"]
+[node name="Grid" type="GridContainer" parent="UI/SequencePanel/CenterContainer/Panel/VBoxContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 columns = 4
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 12
 
-[node name="CloseButton" type="Button" parent="UI/SequencePanel/CenterContainer/VBoxContainer"]
+[node name="CloseButton" type="Button" parent="UI/SequencePanel/CenterContainer/Panel/VBoxContainer"]
 custom_minimum_size = Vector2(200, 52)
 layout_mode = 2
 size_flags_horizontal = 4

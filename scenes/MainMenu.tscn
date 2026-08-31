@@ -167,27 +167,29 @@ theme_override_constants/margin_top = 56
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="AchievementsScreen/Margin"]
+[node name="Panel" type="PanelContainer" parent="AchievementsScreen/Margin"]
+
+[node name="VBox" type="VBoxContainer" parent="AchievementsScreen/Margin/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="AchievementsScreen/Margin/VBox"]
+[node name="TitleLabel" type="Label" parent="AchievementsScreen/Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 text = "ACHIEVEMENTS_TITLE"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="AchievementsScreen/Margin/VBox"]
+[node name="ScrollContainer" type="ScrollContainer" parent="AchievementsScreen/Margin/Panel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="List" type="VBoxContainer" parent="AchievementsScreen/Margin/VBox/ScrollContainer"]
+[node name="List" type="VBoxContainer" parent="AchievementsScreen/Margin/Panel/VBox/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 18
 
-[node name="BackButton" type="Button" parent="AchievementsScreen/Margin/VBox"]
+[node name="BackButton" type="Button" parent="AchievementsScreen/Margin/Panel/VBox"]
 custom_minimum_size = Vector2(200, 56)
 layout_mode = 2
 size_flags_horizontal = 4

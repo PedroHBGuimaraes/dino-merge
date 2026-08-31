@@ -7,13 +7,13 @@ extends Control
 
 signal closed
 
-@onready var music_slider: HSlider = $CenterContainer/VBoxContainer/MusicRow/Slider
-@onready var sfx_slider: HSlider = $CenterContainer/VBoxContainer/SfxRow/Slider
-@onready var vibration_toggle: CheckButton = $CenterContainer/VBoxContainer/VibrationRow/Toggle
+@onready var music_slider: HSlider = $CenterContainer/Panel/VBoxContainer/MusicRow/Slider
+@onready var sfx_slider: HSlider = $CenterContainer/Panel/VBoxContainer/SfxRow/Slider
+@onready var vibration_toggle: CheckButton = $CenterContainer/Panel/VBoxContainer/VibrationRow/Toggle
 @onready
-var language_option: OptionButton = $CenterContainer/VBoxContainer/LanguageRow/LanguageOption
-@onready var reset_button: Button = $CenterContainer/VBoxContainer/ResetButton
-@onready var back_button: Button = $CenterContainer/VBoxContainer/BackButton
+var language_option: OptionButton = $CenterContainer/Panel/VBoxContainer/LanguageRow/LanguageOption
+@onready var reset_button: Button = $CenterContainer/Panel/VBoxContainer/ResetButton
+@onready var back_button: Button = $CenterContainer/Panel/VBoxContainer/BackButton
 @onready var confirm_reset: Control = $ConfirmReset
 @onready var confirm_yes_button: Button = $ConfirmReset/Center/Box/YesButton
 @onready var confirm_cancel_button: Button = $ConfirmReset/Center/Box/CancelButton

@@ -79,11 +79,13 @@ var _shaking := false
 @onready var info_button: TextureButton = $UI/InfoButton
 @onready var sequence_panel: Control = $UI/SequencePanel
 @onready var pause_panel: Control = $UI/PausePanel
-@onready var pause_main_buttons: VBoxContainer = $UI/PausePanel/CenterContainer/MainButtons
-@onready var pause_resume_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/ResumeButton
-@onready var pause_restart_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/RestartButton
-@onready var pause_settings_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/SettingsButton
-@onready var pause_menu_btn: Button = $UI/PausePanel/CenterContainer/MainButtons/MenuButton
+@onready var pause_main_buttons: VBoxContainer = $UI/PausePanel/CenterContainer/Panel/MainButtons
+@onready var pause_resume_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/ResumeButton
+@onready
+var pause_restart_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/RestartButton
+@onready
+var pause_settings_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/SettingsButton
+@onready var pause_menu_btn: Button = $UI/PausePanel/CenterContainer/Panel/MainButtons/MenuButton
 @onready var confirm_restart_panel: Control = $UI/PausePanel/ConfirmPanel
 @onready var confirm_restart_yes_btn: Button = $UI/PausePanel/ConfirmPanel/Center/Box/YesButton
 @onready var confirm_cancel_btn: Button = $UI/PausePanel/ConfirmPanel/Center/Box/CancelButton

@@ -20,101 +20,103 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/Panel"]
 theme_override_constants/separation = 18
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/VBoxContainer"]
 theme_override_colors/font_color = Color(1, 0.55, 0.15, 1)
 theme_override_font_sizes/font_size = 34
 horizontal_alignment = 1
 text = "SETTINGS_TITLE"
 
-[node name="MusicRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+[node name="MusicRow" type="HBoxContainer" parent="CenterContainer/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 16
 
-[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/MusicRow"]
-custom_minimum_size = Vector2(150, 0)
+[node name="Label" type="Label" parent="CenterContainer/Panel/VBoxContainer/MusicRow"]
+custom_minimum_size = Vector2(118, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
 text = "SETTINGS_MUSIC"
 
-[node name="Slider" type="HSlider" parent="CenterContainer/VBoxContainer/MusicRow"]
-custom_minimum_size = Vector2(190, 32)
+[node name="Slider" type="HSlider" parent="CenterContainer/Panel/VBoxContainer/MusicRow"]
+custom_minimum_size = Vector2(150, 32)
 layout_mode = 2
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.05
 value = 1.0
 
-[node name="SfxRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+[node name="SfxRow" type="HBoxContainer" parent="CenterContainer/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 16
 
-[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/SfxRow"]
-custom_minimum_size = Vector2(150, 0)
+[node name="Label" type="Label" parent="CenterContainer/Panel/VBoxContainer/SfxRow"]
+custom_minimum_size = Vector2(118, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
 text = "SETTINGS_SFX"
 
-[node name="Slider" type="HSlider" parent="CenterContainer/VBoxContainer/SfxRow"]
-custom_minimum_size = Vector2(190, 32)
+[node name="Slider" type="HSlider" parent="CenterContainer/Panel/VBoxContainer/SfxRow"]
+custom_minimum_size = Vector2(150, 32)
 layout_mode = 2
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.05
 value = 1.0
 
-[node name="VibrationRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+[node name="VibrationRow" type="HBoxContainer" parent="CenterContainer/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 16
 
-[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/VibrationRow"]
-custom_minimum_size = Vector2(150, 0)
+[node name="Label" type="Label" parent="CenterContainer/Panel/VBoxContainer/VibrationRow"]
+custom_minimum_size = Vector2(118, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
 text = "SETTINGS_VIBRATION"
 
-[node name="Toggle" type="CheckButton" parent="CenterContainer/VBoxContainer/VibrationRow"]
-custom_minimum_size = Vector2(190, 0)
+[node name="Toggle" type="CheckButton" parent="CenterContainer/Panel/VBoxContainer/VibrationRow"]
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 button_pressed = true
 
-[node name="LanguageRow" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+[node name="LanguageRow" type="HBoxContainer" parent="CenterContainer/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 16
 
-[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/LanguageRow"]
-custom_minimum_size = Vector2(150, 0)
+[node name="Label" type="Label" parent="CenterContainer/Panel/VBoxContainer/LanguageRow"]
+custom_minimum_size = Vector2(118, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.9, 0.76, 1)
 theme_override_font_sizes/font_size = 22
 text = "SETTINGS_LANGUAGE"
 
-[node name="LanguageOption" type="OptionButton" parent="CenterContainer/VBoxContainer/LanguageRow"]
-custom_minimum_size = Vector2(190, 44)
+[node name="LanguageOption" type="OptionButton" parent="CenterContainer/Panel/VBoxContainer/LanguageRow"]
+custom_minimum_size = Vector2(150, 44)
 layout_mode = 2
 auto_translate_mode = 2
 
-[node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer" type="Control" parent="CenterContainer/Panel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="ResetButton" type="Button" parent="CenterContainer/VBoxContainer"]
+[node name="ResetButton" type="Button" parent="CenterContainer/Panel/VBoxContainer"]
 custom_minimum_size = Vector2(240, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "SETTINGS_RESET"
 
-[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer"]
+[node name="BackButton" type="Button" parent="CenterContainer/Panel/VBoxContainer"]
 custom_minimum_size = Vector2(240, 56)
 layout_mode = 2
 size_flags_horizontal = 4

@@ -1,16 +1,23 @@
-[gd_scene load_steps=3 format=3 uid="uid://cq8p0dino001"]
+[gd_scene load_steps=4 format=3 uid="uid://cq8p0dino001"]
 
 [ext_resource type="Script" path="res://scripts/dino.gd" id="1"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 20.0
 
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_dino"]
+friction = 0.85
+bounce = 0.0
+
 [node name="Dino" type="RigidBody2D"]
 collision_layer = 2
 collision_mask = 3
+physics_material_override = SubResource("PhysicsMaterial_dino")
 continuous_cd = true
 contact_monitor = true
 max_contacts_reported = 6
+linear_damp = 0.3
+angular_damp = 2.0
 script = ExtResource("1")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

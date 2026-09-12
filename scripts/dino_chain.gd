@@ -87,8 +87,13 @@ const CONTENT_SIZE := {
 
 const ASSET_DIR := "res://assets/dino"
 const COLLISION_DATA_PATH := "res://assets/dino/collision_data.json"
-const MIN_RADIUS := 35.1
-const RADIUS_STEP := 7.4
+# Bumped ~12% over the original 35.1 / 7.4 (two passes: ~7% then another
+# ~5%) so every dino reads chunkier on screen and in the pit, without
+# changing the 32-rung ramp shape. Top rung is now ~297px radius (~594
+# diameter) vs the 620px pit interior, so the biggest merges still keep a
+# small margin against the walls.
+const MIN_RADIUS := 39.5
+const RADIUS_STEP := 8.3
 
 var levels: Array[DinoLevel] = []
 

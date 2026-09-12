@@ -27,7 +27,17 @@ const DANGER_LINE_Y_DESIGN := 220.0
 ## otherwise a dino resting near the top of the pit renders partly
 ## behind that panel and is unreadable.
 const TOP_UI_MARGIN := 100.0
-const MAX_SPAWN_LEVEL := 4  # only the 5 smallest species come out of the spawner
+## Base spawner pool: the 5 smallest species (indices 0-4). The cap widens
+## as the player merges their way up the chain this run -- see
+## _current_spawn_cap -- up to SPAWN_LEVEL_CEILING, so a fresh run stays
+## gentle and a deep run gradually stops handing out only the tiny ones.
+const MAX_SPAWN_LEVEL := 4
+const SPAWN_LEVEL_CEILING := 14
+## How hard _random_spawn_level leans toward the TOP of the available
+## window: the pick is the max of this many uniform rolls over [0, cap].
+## 1 = flat, 2 = gentle ramp (tier `cap` ends up ~(2*cap+1)x as likely as
+## tier 0), 3+ = steeper. Nothing ever comes out above `cap`.
+const SPAWN_TOP_BIAS_ROLLS := 2
 const SOUND_ON_ICON := preload("res://assets/ui/merge/icon_sound_on.png")
 const SOUND_OFF_ICON := preload("res://assets/ui/merge/icon_sound_off.png")
 
@@ -186,8 +196,28 @@ func _fit_gameplay_to_viewport() -> void:
 	GameManager.danger_line_y = DANGER_LINE_Y_DESIGN
 
 
+## Highest chain index the spawner may currently hand the player. It
+## tracks the biggest dino the player has actually MADE this run
+## (GameManager.run_highest_level), staying 3 rungs below it: reach dino
+## #8 and drops still stop at #5, reach #9 and #6 opens up, and so on.
+## Floored at the base pool (MAX_SPAWN_LEVEL) so a fresh run -- or one
+## that never climbs past the base -- stays gentle, and clamped to
+## SPAWN_LEVEL_CEILING / the real end of the chain.
+func _current_spawn_cap() -> int:
+	var cap := maxi(MAX_SPAWN_LEVEL, GameManager.run_highest_level - 3)
+	return mini(cap, mini(SPAWN_LEVEL_CEILING, DinoChain.level_count() - 1))
+
+
 func _random_spawn_level() -> int:
-	return randi() % (MAX_SPAWN_LEVEL + 1)
+	var cap := _current_spawn_cap()
+	# Weighted toward the TOP of the [0, cap] window: the player should
+	# mostly be handed dinos near the biggest they've built this run, not
+	# an endless drip of hatchlings. Max of N rolls -- tier `cap` is the
+	# mode, tier 0 the rarest, nothing above `cap`. See SPAWN_TOP_BIAS_ROLLS.
+	var pick := 0
+	for _i in SPAWN_TOP_BIAS_ROLLS:
+		pick = maxi(pick, randi() % (cap + 1))
+	return pick
 
 
 func _unhandled_input(event: InputEvent) -> void:

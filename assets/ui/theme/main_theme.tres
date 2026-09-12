@@ -1,6 +1,7 @@
-[gd_resource type="Theme" load_steps=7 format=3]
+[gd_resource type="Theme" load_steps=8 format=3]
 
 [ext_resource type="Texture2D" uid="uid://ckhg7rjwu1jnb" path="res://assets/ui/merge/panel.png" id="1"]
+[ext_resource type="FontFile" uid="uid://cm6jipjqr4i7n" path="res://assets/fonts/Baloo2-Medium.ttf" id="2"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
 texture = ExtResource("1")
@@ -80,6 +81,7 @@ corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
 [resource]
+default_font = ExtResource("2")
 default_font_size = 20
 Button/styles/normal = SubResource("StyleBoxFlat_normal")
 Button/styles/hover = SubResource("StyleBoxFlat_hover")

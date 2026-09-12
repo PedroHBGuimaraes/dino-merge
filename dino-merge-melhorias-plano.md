@@ -48,6 +48,23 @@ Executado na ordem sugerida. Commits em `master`:
   agora são tábuas de pedra fóssil emolduradas.
 - **J3** (`c10077d`) — fusão empurra + dá squash nos dinos vizinhos, a
   onda passa pela pilha em vez de ser absorvida em silêncio.
+- **U2 fonte** — `default_font` do tema agora é **Baloo 2 Medium (500)**
+  (`assets/fonts/Baloo2-Medium.ttf`, instanciado do VF do Google Fonts em
+  wght=500; OFL). Rounded, cobre os 5 idiomas com acentos. A pixel
+  `DinoMerge.ttf` fica só no título do menu, de propósito.
+- **Música** — trilha nova `assets/audio/music/island_bounce.ogg`
+  (gerada por `tools/gen_music.py`: groove maior, calmo mas com vida,
+  112 BPM, loop seamless de 16 compassos). Substitui `canyon_theme.ogg`
+  no `Main.tscn`.
+- Dinos ~5% maiores (2º passo): `MIN_RADIUS`/`RADIUS_STEP` em `dino_chain`.
+- **Pool do spawner** — deixou de crescer por pontuação. Agora acompanha o
+  maior dino criado na partida (`GameManager.run_highest_level`), sempre 3
+  degraus abaixo dele, com piso no pool base (`MAX_SPAWN_LEVEL`). Removido
+  `SPAWN_UNLOCK_SCORE`.
+- **Chances do spawner** — invertidas: agora pesa pro TOPO da janela
+  liberada (`_random_spawn_level` = máx de N sorteios, `SPAWN_TOP_BIAS_ROLLS`
+  = 2). Com cap 7: ~23% tier 7 vs ~5% tier 1 (rampa suave; subir o const
+  deixa mais íngreme).
 
 ### Ainda pendente
 - **U5** — setas "→" de progressão entre células da Dinopédia (grade 4-col
@@ -56,8 +73,6 @@ Executado na ordem sugerida. Commits em `master`:
 - **C3** modos extras (diário / poço estreito / objetivo) — feature grande,
   decisão de design.
 - HUD: mostrar os 2 próximos dinos (mexe no caminho do rewarded-continue).
-- Fonte pixel só no título (atlas sem acentos — não serve de fonte global
-  num jogo em 5 idiomas).
 
 ---
 
@@ -119,7 +134,7 @@ de jogo simplesmente some, e os dinos empilhados ficam quase invisíveis.
 | # | Ação |
 |---|---|
 | U1 | **Logo do menu.** Hoje é o `app_icon.png` **cru, com fundo branco**, esticado como logo — feio contra o cânion. Gerar logo "DINO MERGE" com fundo transparente, tema fóssil (letras de osso/pedra), + o `title_plank` atrás se quiser. |
-| U2 | **Fonte.** Tudo em fonte default do Godot. Gerar bitmap font pixel temática ("DinoMerge") via PixelLab e aplicar no `main_theme.tres` (`default_font`). O `DinoIsland.ttf` na pasta é do jogo 1 — não usar. |
+| U2 | ~~**Fonte.**~~ **Feito** — `default_font` do tema = **Baloo 2 Medium (500)**. A pixel `DinoMerge.ttf` fica só no título. `DinoIsland.ttf` (jogo 1) segue sem uso. |
 | U3 | **Game over.** Só tem "Jogar de novo" — falta botão "Menu". E mostrar a conquista da run: "Você chegou ao **Triceratops**!" com o sprite, + a torre final ao fundo em destaque em vez de escondida no escuro. |
 | U4 | Painel sólido temático (nine-patch madeira/pedra) para Pause, Sequência, Conquistas, Configurações — em vez de só o overlay marrom translúcido (ver B7). |
 | U5 | **Painel de sequência = Dinopédia.** Hoje é uma grade de 32. Adicionar: setas "→" de progressão, silhueta preta nos que o jogador **nunca criou** (incentivo de coleção — precisa persistir "espécies vistas"), destaque no próximo alvo, e um fato curto por espécie ao tocar. |

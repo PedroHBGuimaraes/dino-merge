@@ -5,6 +5,14 @@ extends RigidBody2D
 ## "stuck above the danger line" game-over timer.
 
 const SETTLE_SPEED := 12.0
+## Hard backstop against a physics "explosion": no matter what impulse the
+## solver hands a dino (deep merge-spawn overlap, a stacked seam, a pile
+## that can't converge), its speed/spin is clamped here every physics
+## tick, so the worst case is a fast shove that settles -- never a dino
+## launched off-screen or through a wall. 2400 px/s is still well above a
+## normal terminal-velocity drop (~gravity 1600 over the pit height).
+const MAX_SPEED := 2400.0
+const MAX_SPIN := 12.0
 ## Seconds each idle frame stays on screen -- slow enough to read as a
 ## gentle breathing loop rather than a flicker.
 const IDLE_FRAME_DURATION := 0.35
@@ -97,6 +105,19 @@ func setup(index: int) -> void:
 		sprite.scale = Vector2(scale_factor, scale_factor)
 	else:
 		sprite.visible = false
+	# Bigger dinos are heavier (so a light hatchling dropped on top can't
+	# shove the tier-20 boulder it lands on), but the ratio is deliberately
+	# compressed to ~4x end to end -- a large mass spread is the classic
+	# source of 2D solver jitter in a tall stack. Pair it with a center of
+	# mass pulled down toward the dino's feet: an irregular silhouette whose
+	# hull is centred on the 64x64 canvas otherwise balances happily upside
+	# down, and a low COM makes "flipped" an unstable pose it rights itself
+	# out of instead of resting in when the pile leans on it.
+	var frac: float = float(level_index) / maxf(DinoChain.level_count() - 1, 1.0)
+	mass = lerpf(0.55, 2.2, frac)
+	center_of_mass_mode = RigidBody2D.CENTER_OF_MASS_MODE_CUSTOM
+	center_of_mass = Vector2(0.0, lvl.radius * 0.25)
+
 	_idle_frames = lvl.idle_frames
 	_idle_frame_index = 0
 	_idle_elapsed = 0.0
@@ -188,7 +209,10 @@ func nudge(from: Vector2) -> void:
 	var dist := away.length()
 	if dist < 0.01:
 		return
-	apply_central_impulse(away.normalized() * clampf(140.0 - dist * 0.3, 20.0, 140.0))
+	# Softer than it was (ceiling 140 -> 90): the ripple should visibly pass
+	# through the pile, not add a big outward kick to every neighbour of
+	# every merge -- in a combo cascade those stacked up into launches.
+	apply_central_impulse(away.normalized() * clampf(90.0 - dist * 0.25, 15.0, 90.0))
 	var base := sprite.scale
 	var t := create_tween()
 	t.tween_property(sprite, "scale", Vector2(base.x * 1.12, base.y * 0.88), 0.06)
@@ -199,6 +223,16 @@ func _ready() -> void:
 	contact_monitor = true
 	max_contacts_reported = 6
 	body_entered.connect(_on_body_entered)
+
+
+## Velocity/spin ceiling -- see MAX_SPEED. Runs even without a custom
+## integrator; we only clamp the state Godot already computed.
+func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
+	var v := state.linear_velocity
+	var speed := v.length()
+	if speed > MAX_SPEED:
+		state.linear_velocity = v * (MAX_SPEED / speed)
+	state.angular_velocity = clampf(state.angular_velocity, -MAX_SPIN, MAX_SPIN)
 
 
 func _process(delta: float) -> void:

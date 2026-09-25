@@ -1,5 +1,7 @@
 extends Control
 
+const MergeUI := preload("res://scripts/merge_ui.gd")
+
 @onready var high_score_label: Label = $CenterContainer/VBoxContainer/HighScoreRow/HighScoreLabel
 @onready var play_button: Button = $CenterContainer/VBoxContainer/PlayButton
 @onready
@@ -11,6 +13,7 @@ var achievements_button: Button = $CenterContainer/VBoxContainer/ButtonRow/Achie
 
 
 func _ready() -> void:
+	_polish_menu()
 	_refresh_high_score()
 	play_button.pressed.connect(_on_play_pressed)
 	achievements_button.pressed.connect(_on_achievements_pressed)
@@ -54,8 +57,29 @@ func _on_settings_closed() -> void:
 
 func _refresh_high_score() -> void:
 	high_score_label.text = Loc.t("MENU_HIGH_SCORE", {"score": GameManager.high_score})
+	$CenterContainer/VBoxContainer/CollectionCount.text = Loc.t(
+		"UI_COLLECTION", {"count": GameManager.discovered_count(), "total": DinoChain.level_count()}
+	)
 
 
 func _on_achievements_pressed() -> void:
 	ui_click_sfx.play()
 	achievements_screen.open()
+
+
+func _polish_menu() -> void:
+	MergeUI.primary(play_button)
+	for pair in [[achievements_button, "ACHIEVEMENTS_TITLE"], [settings_button, "SETTINGS_TITLE"]]:
+		var button: Button = pair[0]
+		button.text = pair[1]
+		button.custom_minimum_size = Vector2(154, 56)
+		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_constant_override("icon_max_width", 22)
+		button.add_theme_constant_override("h_separation", 8)
+	var collection := MergeUI.label("", 15, MergeUI.MUTED)
+	collection.name = "CollectionCount"
+	collection.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	collection.text = Loc.t(
+		"UI_COLLECTION", {"count": GameManager.discovered_count(), "total": DinoChain.level_count()}
+	)
+	$CenterContainer/VBoxContainer.add_child(collection)

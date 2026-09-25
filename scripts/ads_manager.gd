@@ -5,39 +5,50 @@ extends Node
 ## interstitial slot (shown between matches every INTERSTITIAL_EVERY_N
 ## completed runs). Mirrors the flow in the plugin's own demo/Main.gd.
 ##
-## The `Admob` node itself is NOT part of this project yet -- installing
-## the actual addon (native Android/iOS binaries) is a manual step done
-## through the Godot editor, not something this script can create. Until
-## that node exists as a child of this autoload, every method below is a
-## safe no-op: ads report as "not ready", offer_rewarded_continue()
-## always resolves to `false`, and register_game_over_and_continue()
-## just calls its callback immediately. Nothing here needs to change
-## when the addon is installed -- get_node_or_null() picks the real node
-## up on the next run.
+## The native addon is loaded dynamically only on Android/iOS. Desktop and
+## headless runs remain safe no-ops, while exported mobile builds create and
+## configure the Admob node before initializing the SDK.
 
 const INTERSTITIAL_EVERY_N := 3
 
-var admob: Node = null
+## Production AdMob configuration for Android.
+const ANDROID_APPLICATION_ID := "ca-app-pub-1898448267289061~1570505998"
+const ANDROID_REWARDED_ID := "ca-app-pub-1898448267289061/9170717853"
+const ANDROID_INTERSTITIAL_ID := "ca-app-pub-1898448267289061/6005323456"
+const ADMOB_SCRIPT_PATH := "res://addons/AdmobPlugin/Admob.gd"
+
+var admob = null
 
 var _rewarded_loaded: bool = false
+var _rewarded_ad_id := ""
 var _reward_earned_this_show: bool = false
 var _pending_reward_callback := Callable()
 
 var _interstitial_loaded: bool = false
+var _interstitial_ad_id := ""
 var _games_since_interstitial: int = 0
 var _pending_interstitial_callback := Callable()
 
 
 func _ready() -> void:
-	admob = get_node_or_null("Admob")
-	if admob == null:
-		push_warning(
-			"AdsManager: no Admob child node found -- ads are disabled (addon not installed)."
-		)
+	if not ResourceLoader.exists(ADMOB_SCRIPT_PATH):
+		push_warning("AdsManager: AdMob addon not installed -- ads are disabled.")
 		return
+	if not OS.get_name() in ["Android", "iOS"]:
+		return
+	var admob_script = load(ADMOB_SCRIPT_PATH)
+	admob = admob_script.new()
+	admob.name = "Admob"
+	admob.is_real = not OS.is_debug_build()
+	admob.android_debug_application_id = "ca-app-pub-3940256099942544~3347511713"
+	admob.android_debug_rewarded_id = "ca-app-pub-3940256099942544/5224354917"
+	admob.android_debug_interstitial_id = "ca-app-pub-3940256099942544/1033173712"
+	admob.android_real_application_id = ANDROID_APPLICATION_ID
+	admob.android_real_rewarded_id = ANDROID_REWARDED_ID
+	admob.android_real_interstitial_id = ANDROID_INTERSTITIAL_ID
+	add_child(admob)
 	_connect_admob_signals()
-	if not Engine.is_editor_hint():
-		admob.initialize()
+	admob.initialize()
 
 
 func is_rewarded_ad_ready() -> bool:
@@ -58,7 +69,7 @@ func offer_rewarded_continue(on_result: Callable) -> void:
 	_reward_earned_this_show = false
 	_pending_reward_callback = on_result
 	_rewarded_loaded = false
-	admob.show_rewarded_ad()
+	_call_show_ad("show_rewarded_ad", _rewarded_ad_id)
 
 
 ## Call once per completed match (i.e. when the player actually leaves
@@ -73,7 +84,7 @@ func register_game_over_and_continue(on_done: Callable) -> void:
 		_games_since_interstitial = 0
 		_interstitial_loaded = false
 		_pending_interstitial_callback = on_done
-		admob.show_interstitial_ad()
+		_call_show_ad("show_interstitial_ad", _interstitial_ad_id)
 	else:
 		on_done.call()
 
@@ -104,6 +115,20 @@ func _connect_admob_signals() -> void:
 	admob.interstitial_ad_failed_to_show_full_screen_content.connect(
 		_on_interstitial_ad_failed_to_show_full_screen_content
 	)
+
+
+func _call_show_ad(method_name: String, ad_id: String) -> void:
+	# Newer plugin versions require the loaded ad ID; older ones do not.
+	for method_info in admob.get_method_list():
+		if method_info.get("name", "") != method_name:
+			continue
+		var arguments: Array = method_info.get("args", [])
+		if arguments.size() > 0 and not ad_id.is_empty():
+			admob.call(method_name, ad_id)
+		else:
+			admob.call(method_name)
+		return
+	push_warning("AdsManager: AdMob method '%s' is unavailable" % method_name)
 
 
 # --- init / consent (same flow as the plugin's demo/Main.gd) ---
@@ -161,12 +186,14 @@ func _load_ads() -> void:
 # --- rewarded ---
 
 
-func _on_rewarded_ad_loaded(_ad_info, _response_info) -> void:
+func _on_rewarded_ad_loaded(ad_info, _response_info) -> void:
 	_rewarded_loaded = true
+	_rewarded_ad_id = _extract_ad_id(ad_info)
 
 
 func _on_rewarded_ad_failed_to_load(_ad_info, _error_data) -> void:
 	_rewarded_loaded = false
+	_rewarded_ad_id = ""
 
 
 func _on_rewarded_ad_user_earned_reward(_ad_info, _reward_data) -> void:
@@ -192,12 +219,14 @@ func _resolve_pending_reward(earned: bool) -> void:
 # --- interstitial ---
 
 
-func _on_interstitial_ad_loaded(_ad_info, _response_info) -> void:
+func _on_interstitial_ad_loaded(ad_info, _response_info) -> void:
 	_interstitial_loaded = true
+	_interstitial_ad_id = _extract_ad_id(ad_info)
 
 
 func _on_interstitial_ad_failed_to_load(_ad_info, _error_data) -> void:
 	_interstitial_loaded = false
+	_interstitial_ad_id = ""
 
 
 func _on_interstitial_ad_dismissed_full_screen_content(_ad_info) -> void:
@@ -214,3 +243,13 @@ func _resolve_pending_interstitial() -> void:
 	if _pending_interstitial_callback.is_valid():
 		_pending_interstitial_callback.call()
 	_pending_interstitial_callback = Callable()
+
+
+func _extract_ad_id(ad_info) -> String:
+	if ad_info is String:
+		return ad_info
+	if ad_info != null and ad_info.has_method("get_ad_id"):
+		return str(ad_info.get_ad_id())
+	if ad_info is Dictionary:
+		return str(ad_info.get("ad_id", ""))
+	return ""

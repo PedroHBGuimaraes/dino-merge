@@ -3,58 +3,65 @@
 [ext_resource type="Texture2D" uid="uid://ckhg7rjwu1jnb" path="res://assets/ui/merge/panel.png" id="1"]
 [ext_resource type="FontFile" uid="uid://cm6jipjqr4i7n" path="res://assets/fonts/Baloo2-Medium.ttf" id="2"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
-texture = ExtResource("1")
-texture_margin_left = 44.0
-texture_margin_top = 44.0
-texture_margin_right = 44.0
-texture_margin_bottom = 44.0
-content_margin_left = 26.0
-content_margin_top = 24.0
-content_margin_right = 26.0
-content_margin_bottom = 24.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxTexture_panel"]
+bg_color = Color(0.082, 0.153, 0.176, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.27, 0.38, 0.40, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+content_margin_left = 20.0
+content_margin_top = 22.0
+content_margin_right = 20.0
+content_margin_bottom = 22.0
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_normal"]
-bg_color = Color(0.16, 0.09, 0.05, 0.95)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.65, 0.15, 1)
+bg_color = Color(0.17, 0.28, 0.31, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.54, 0.55, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(1, 0.55, 0.1, 0.4)
-shadow_size = 5
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hover"]
-bg_color = Color(0.22, 0.12, 0.06, 0.97)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.78, 0.35, 1)
+bg_color = Color(0.22, 0.36, 0.38, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.54, 0.55, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(1, 0.7, 0.2, 0.6)
-shadow_size = 9
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pressed"]
-bg_color = Color(0.1, 0.06, 0.03, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.5, 0.1, 1)
+bg_color = Color(0.12, 0.22, 0.25, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.54, 0.55, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(1, 0.45, 0.05, 0.4)
-shadow_size = 6
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_disabled"]
 bg_color = Color(0.14, 0.12, 0.1, 0.6)
@@ -83,6 +90,7 @@ corner_radius_bottom_left = 14
 [resource]
 default_font = ExtResource("2")
 default_font_size = 20
+Label/colors/font_color = Color(1, 0.95, 0.86, 1)
 Button/styles/normal = SubResource("StyleBoxFlat_normal")
 Button/styles/hover = SubResource("StyleBoxFlat_hover")
 Button/styles/pressed = SubResource("StyleBoxFlat_pressed")

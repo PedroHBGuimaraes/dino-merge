@@ -28,6 +28,10 @@ Achievements="*res://scripts/achievements.gd"
 AdsManager="*res://scenes/AdsManager.tscn"
 SceneTransition="*res://scenes/SceneTransition.tscn"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/AdmobPlugin/plugin.cfg")
+
 [display]
 
 window/size/viewport_width=400

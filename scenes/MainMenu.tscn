@@ -34,7 +34,7 @@ script = ExtResource("11")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.09, 0.05, 0.03, 0.35)
+color = Color(0.055, 0.13, 0.16, 0.68)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 anchors_preset = 15
@@ -46,7 +46,7 @@ theme_override_constants/separation = 14
 alignment = 1
 
 [node name="AppIconDisplay" type="TextureRect" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(190, 190)
+custom_minimum_size = Vector2(160, 160)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = ExtResource("3")
@@ -54,14 +54,14 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
-theme_override_colors/font_color = Color(1, 0.62, 0.2, 1)
+theme_override_colors/font_color = Color(1, 0.95, 0.84, 1)
 theme_override_fonts/font = ExtResource("12")
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 text = "DINO MERGE"
 
 [node name="SubtitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
-theme_override_colors/font_color = Color(0.86, 0.76, 0.6, 1)
+theme_override_colors/font_color = Color(0.74, 0.85, 0.82, 1)
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 text = "MENU_SUBTITLE"
@@ -91,7 +91,7 @@ custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 
 [node name="PlayButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(240, 64)
+custom_minimum_size = Vector2(320, 64)
 layout_mode = 2
 size_flags_horizontal = 4
 

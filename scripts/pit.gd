@@ -14,8 +14,8 @@ extends Node2D
 ## the pile reads as the foreground it is.
 
 ## Physical interior the dinos move in (matches the wall/floor colliders).
-const X_LEFT := 50.0
-const X_RIGHT := 670.0
+var x_left := 50.0
+var x_right := 670.0
 const Y_TOP := 44.0
 const Y_FLOOR := 1190.0
 
@@ -29,18 +29,18 @@ const GROUND_HEIGHT := 150.0
 ## Near-opaque on purpose: the point is to replace the busy canyon art
 ## (skeletons, lava river) with a clean surface the dinos read against.
 ## The theme still lives in the walls, the sky strip above, and the menu.
-const INTERIOR_TOP_COLOR := Color(0.09, 0.055, 0.045, 1.0)
-const INTERIOR_BOTTOM_COLOR := Color(0.16, 0.10, 0.07, 1.0)
-const GROUND_TOP_COLOR := Color(0.30, 0.19, 0.12, 0.97)
-const GROUND_BOTTOM_COLOR := Color(0.23, 0.14, 0.09, 0.98)
-const WALL_OUTER_COLOR := Color(0.11, 0.065, 0.045, 1.0)
-const WALL_INNER_COLOR := Color(0.34, 0.19, 0.11, 1.0)
+const INTERIOR_TOP_COLOR := Color("1c323be0")
+const INTERIOR_BOTTOM_COLOR := Color("2d4850e0")
+const GROUND_TOP_COLOR := Color("3d555773")
+const GROUND_BOTTOM_COLOR := Color("344c4f73")
+const WALL_OUTER_COLOR := Color("12242b")
+const WALL_INNER_COLOR := Color("435e61")
 const WALL_STRATA_COLOR := Color(0.0, 0.0, 0.0, 0.16)
-const RIM_COLOR := Color(0.82, 0.56, 0.25, 1.0)
-const FLOOR_TOP_COLOR := Color(0.24, 0.14, 0.09, 1.0)
-const FLOOR_BOTTOM_COLOR := Color(0.09, 0.055, 0.04, 1.0)
+const RIM_COLOR := Color("88aca1")
+const FLOOR_TOP_COLOR := Color("526966")
+const FLOOR_BOTTOM_COLOR := Color("20363c")
 
-const DANGER_BASE_COLOR := Color(1.0, 0.42, 0.08)
+const DANGER_BASE_COLOR := Color(1.0, 0.56, 0.40)
 const DANGER_DASH := 22.0
 const DANGER_GAP := 16.0
 ## A dino whose centre is within this many px below the line pushes the
@@ -64,7 +64,7 @@ func set_intensity(value: float) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	_dash_scroll = fmod(_dash_scroll + delta * 34.0, DANGER_DASH + DANGER_GAP)
+	_dash_scroll = fmod(_dash_scroll + delta * 12.0, DANGER_DASH + DANGER_GAP)
 
 	var closest := INF
 	for dino in get_tree().get_nodes_in_group("dino"):
@@ -103,10 +103,10 @@ func _draw_embers() -> void:
 	draw_polygon(
 		PackedVector2Array(
 			[
-				Vector2(X_LEFT, y_top),
-				Vector2(X_RIGHT, y_top),
-				Vector2(X_RIGHT, Y_FLOOR),
-				Vector2(X_LEFT, Y_FLOOR),
+				Vector2(x_left, y_top),
+				Vector2(x_right, y_top),
+				Vector2(x_right, Y_FLOOR),
+				Vector2(x_left, Y_FLOOR),
 			]
 		),
 		PackedColorArray([top, top, bot, bot])
@@ -116,10 +116,10 @@ func _draw_embers() -> void:
 func _draw_interior() -> void:
 	var pts := PackedVector2Array(
 		[
-			Vector2(X_LEFT, Y_TOP),
-			Vector2(X_RIGHT, Y_TOP),
-			Vector2(X_RIGHT, Y_FLOOR),
-			Vector2(X_LEFT, Y_FLOOR),
+			Vector2(x_left, Y_TOP),
+			Vector2(x_right, Y_TOP),
+			Vector2(x_right, Y_FLOOR),
+			Vector2(x_left, Y_FLOOR),
 		]
 	)
 	var cols := PackedColorArray(
@@ -137,10 +137,10 @@ func _draw_interior() -> void:
 	draw_polygon(
 		PackedVector2Array(
 			[
-				Vector2(X_LEFT, g_top),
-				Vector2(X_RIGHT, g_top),
-				Vector2(X_RIGHT, Y_FLOOR),
-				Vector2(X_LEFT, Y_FLOOR),
+				Vector2(x_left, g_top),
+				Vector2(x_right, g_top),
+				Vector2(x_right, Y_FLOOR),
+				Vector2(x_left, Y_FLOOR),
 			]
 		),
 		PackedColorArray(
@@ -154,10 +154,10 @@ func _draw_interior() -> void:
 	draw_polygon(
 		PackedVector2Array(
 			[
-				Vector2(X_LEFT, Y_TOP),
-				Vector2(X_RIGHT, Y_TOP),
-				Vector2(X_RIGHT, Y_TOP + 140.0),
-				Vector2(X_LEFT, Y_TOP + 140.0),
+				Vector2(x_left, Y_TOP),
+				Vector2(x_right, Y_TOP),
+				Vector2(x_right, Y_TOP + 140.0),
+				Vector2(x_left, Y_TOP + 140.0),
 			]
 		),
 		PackedColorArray([shade, shade, Color(0, 0, 0, 0), Color(0, 0, 0, 0)])
@@ -168,10 +168,10 @@ func _draw_interior() -> void:
 	draw_polygon(
 		PackedVector2Array(
 			[
-				Vector2(X_LEFT, Y_TOP),
-				Vector2(X_LEFT + 70, Y_TOP),
-				Vector2(X_LEFT + 70, Y_FLOOR),
-				Vector2(X_LEFT, Y_FLOOR)
+				Vector2(x_left, Y_TOP),
+				Vector2(x_left + 70, Y_TOP),
+				Vector2(x_left + 70, Y_FLOOR),
+				Vector2(x_left, Y_FLOOR)
 			]
 		),
 		PackedColorArray([edge, clear, clear, edge])
@@ -179,10 +179,10 @@ func _draw_interior() -> void:
 	draw_polygon(
 		PackedVector2Array(
 			[
-				Vector2(X_RIGHT - 70, Y_TOP),
-				Vector2(X_RIGHT, Y_TOP),
-				Vector2(X_RIGHT, Y_FLOOR),
-				Vector2(X_RIGHT - 70, Y_FLOOR)
+				Vector2(x_right - 70, Y_TOP),
+				Vector2(x_right, Y_TOP),
+				Vector2(x_right, Y_FLOOR),
+				Vector2(x_right - 70, Y_FLOOR)
 			]
 		),
 		PackedColorArray([clear, edge, edge, clear])
@@ -218,44 +218,44 @@ func _draw_wall(inner_x: float, outer_x: float) -> void:
 
 
 func _draw_walls() -> void:
-	_draw_wall(X_LEFT, X_LEFT - WALL_OUTER)
-	_draw_wall(X_RIGHT, X_RIGHT + WALL_OUTER)
+	_draw_wall(x_left, x_left - WALL_OUTER)
+	_draw_wall(x_right, x_right + WALL_OUTER)
 
 
 func _draw_floor() -> void:
 	var pts := PackedVector2Array(
 		[
-			Vector2(X_LEFT - WALL_OUTER, Y_FLOOR),
-			Vector2(X_RIGHT + WALL_OUTER, Y_FLOOR),
-			Vector2(X_RIGHT + WALL_OUTER, Y_FLOOR + FLOOR_DEPTH),
-			Vector2(X_LEFT - WALL_OUTER, Y_FLOOR + FLOOR_DEPTH),
+			Vector2(x_left - WALL_OUTER, Y_FLOOR),
+			Vector2(x_right + WALL_OUTER, Y_FLOOR),
+			Vector2(x_right + WALL_OUTER, Y_FLOOR + FLOOR_DEPTH),
+			Vector2(x_left - WALL_OUTER, Y_FLOOR + FLOOR_DEPTH),
 		]
 	)
 	var cols := PackedColorArray(
 		[FLOOR_TOP_COLOR, FLOOR_TOP_COLOR, FLOOR_BOTTOM_COLOR, FLOOR_BOTTOM_COLOR]
 	)
 	draw_polygon(pts, cols)
-	draw_line(Vector2(X_LEFT, Y_FLOOR), Vector2(X_RIGHT, Y_FLOOR), RIM_COLOR, WALL_RIM)
+	draw_line(Vector2(x_left, Y_FLOOR), Vector2(x_right, Y_FLOOR), RIM_COLOR, WALL_RIM)
 
 
 func _draw_danger_line() -> void:
 	var y := _danger_y()
-	var pulse := 0.5 + 0.5 * sin(_t * lerpf(3.0, 12.0, _threat))
+	var pulse := 0.5 + 0.5 * sin(_t * lerpf(2.0, 6.0, _threat))
 	var alpha := lerpf(0.35, 0.7, _threat) + pulse * lerpf(0.15, 0.3, _threat)
 	var col := Color(DANGER_BASE_COLOR, clampf(alpha, 0.0, 1.0))
 	var width := lerpf(2.0, 4.0, _threat)
 
-	var x := X_LEFT - _dash_scroll
-	while x < X_RIGHT:
-		var x0 := maxf(x, X_LEFT)
-		var x1 := minf(x + DANGER_DASH, X_RIGHT)
+	var x := x_left - _dash_scroll
+	while x < x_right:
+		var x0 := maxf(x, x_left)
+		var x1 := minf(x + DANGER_DASH, x_right)
 		if x1 > x0:
 			draw_line(Vector2(x0, y), Vector2(x1, y), col, width)
 		x += DANGER_DASH + DANGER_GAP
 
 	# warning chevrons pointing down from each end, brighter with threat
 	var chev := Color(DANGER_BASE_COLOR, clampf(0.4 + 0.6 * _threat, 0.0, 1.0))
-	for cx in [X_LEFT + 8.0, X_RIGHT - 8.0]:
+	for cx in [x_left + 8.0, x_right - 8.0]:
 		draw_polyline(
 			PackedVector2Array(
 				[Vector2(cx - 7, y + 3), Vector2(cx, y + 13), Vector2(cx + 7, y + 3)]

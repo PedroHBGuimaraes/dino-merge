@@ -10,7 +10,7 @@ extends Control
 signal closed
 
 const REVEALED_NUMBER_COLOR := Color(0.97, 0.9, 0.76, 1)
-const LOCKED_NUMBER_COLOR := Color(0.5, 0.45, 0.4, 1)
+const LOCKED_NUMBER_COLOR := Color("a9c4c0")
 const SILHOUETTE_TINT := Color(0.0, 0.0, 0.0, 0.92)
 
 var _detail: Control
@@ -78,7 +78,14 @@ func _build_cell(index: int, revealed: bool) -> Control:
 		rect.modulate = SILHOUETTE_TINT
 		icon_holder = rect
 	icon_holder.custom_minimum_size = Vector2(48, 48)
-	cell.add_child(icon_holder)
+	var tile := PanelContainer.new()
+	var tile_style := StyleBoxFlat.new()
+	tile_style.bg_color = Color("314b50") if revealed else Color("718c86")
+	tile_style.set_corner_radius_all(10)
+	tile_style.set_content_margin_all(4)
+	tile.add_theme_stylebox_override("panel", tile_style)
+	cell.add_child(tile)
+	tile.add_child(icon_holder)
 
 	var number_label := Label.new()
 	number_label.text = str(index + 1) if revealed else "?"
@@ -131,8 +138,8 @@ func _build_detail() -> void:
 
 	var box := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.14, 0.08, 0.05, 1.0)
-	style.border_color = Color(0.82, 0.56, 0.25, 1.0)
+	style.bg_color = Color("15272d")
+	style.border_color = Color("40575b")
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(14)
 	style.set_content_margin_all(18)

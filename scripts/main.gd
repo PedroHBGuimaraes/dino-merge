@@ -1,5 +1,8 @@
 extends Node2D
 
+const MergeUI := preload("res://scripts/merge_ui.gd")
+const AimGuide := preload("res://scripts/aim_guide.gd")
+
 const DINO_SCENE := preload("res://scenes/Dino.tscn")
 const FLOATING_SCORE_SCENE := preload("res://scenes/FloatingScoreText.tscn")
 
@@ -16,8 +19,8 @@ const FLOATING_SCORE_SCENE := preload("res://scenes/FloatingScoreText.tscn")
 ## have that problem.
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
 
-const LEFT_X := 40.0
-const RIGHT_X := 680.0
+var left_x := 50.0
+var right_x := 670.0
 const SPAWN_Y := 100.0
 const DANGER_LINE_Y_DESIGN := 220.0
 ## Real screen pixels (not design space -- the UI CanvasLayer's TopBar
@@ -26,7 +29,7 @@ const DANGER_LINE_Y_DESIGN := 220.0
 ## scenes/Main.tscn's TopBar offset_bottom (94) plus a small gap --
 ## otherwise a dino resting near the top of the pit renders partly
 ## behind that panel and is unreadable.
-const TOP_UI_MARGIN := 100.0
+const TOP_UI_MARGIN := 152.0
 ## Base spawner pool: the 5 smallest species (indices 0-4). The cap widens
 ## as the player merges their way up the chain this run -- see
 ## _current_spawn_cap -- up to SPAWN_LEVEL_CEILING, so a fresh run stays
@@ -60,6 +63,11 @@ var current_level_index: int = 0
 ## shown ahead of time via next_icon so the player can plan the drop
 ## after this one, not just the one they're already holding.
 var next_level_index: int = 0
+var second_next_level_index: int = 0
+var second_next_icon: TextureRect
+var hud_record: Label
+var hud_panel: PanelContainer
+var _active_pointer := -2
 var can_drop: bool = true
 var preview_x: float = 360.0
 var _bg_tier: int = 0
@@ -123,7 +131,10 @@ var reached_icon: TextureRect = $UI/GameOverPanel/CenterContainer/VBoxContainer/
 
 
 func _ready() -> void:
+	_build_ui()
+	hud_panel.resized.connect(_fit_gameplay_to_viewport)
 	_fit_gameplay_to_viewport()
+	get_viewport().size_changed.connect(_fit_gameplay_to_viewport)
 	GameManager.reset()
 	GameManager.register_game_started()
 	GameManager.score_changed.connect(_on_score_changed)
@@ -154,6 +165,7 @@ func _ready() -> void:
 	sequence_panel.visible = false
 	current_level_index = _random_spawn_level()
 	next_level_index = _random_spawn_level()
+	second_next_level_index = _random_spawn_level()
 	_update_preview()
 	# GameManager.reset() emits score_changed before the connect above, so
 	# seed the HUD label once here (also picks the right locale on boot).
@@ -177,7 +189,8 @@ func _ready() -> void:
 ## quietly breaking physics bodies (see the _game_scale comment above).
 func _fit_gameplay_to_viewport() -> void:
 	var vp_size := get_viewport_rect().size
-	var available_height: float = max(vp_size.y - TOP_UI_MARGIN, 1.0)
+	var header_height := maxf(TOP_UI_MARGIN, hud_panel.size.y + 22.0)
+	var available_height: float = max(vp_size.y - header_height, 1.0)
 	_game_scale = min(vp_size.x / DESIGN_SIZE.x, available_height / DESIGN_SIZE.y)
 	camera.zoom = Vector2(_game_scale, _game_scale)
 	# Center horizontally as before, but any vertical slack is only ever
@@ -191,9 +204,28 @@ func _fit_gameplay_to_viewport() -> void:
 	# (vp_size.x/2, TOP_UI_MARGIN + extra_height/2).
 	var extra_height: float = available_height - DESIGN_SIZE.y * _game_scale
 	camera.position = Vector2(
-		360.0 - (vp_size.x / 2.0) / _game_scale, -(TOP_UI_MARGIN + extra_height / 2.0) / _game_scale
+		360.0 - (vp_size.x / 2.0) / _game_scale, -(header_height + extra_height / 2.0) / _game_scale
 	)
 	GameManager.danger_line_y = DANGER_LINE_Y_DESIGN
+	# Widen the well toward a 12 px screen inset, capped at 30% growth.
+	# Keep camera zoom uniform so the dinos retain their proportions.
+	var outer_width := minf((vp_size.x - 24.0) / _game_scale, 910.0)
+	var half_inner := (outer_width - 80.0) * 0.5
+	left_x = 360.0 - half_inner
+	right_x = 360.0 + half_inner
+	var container := $GameplayRoot/Container
+	container.get_node("PitVisual").x_left = left_x
+	container.get_node("PitVisual").x_right = right_x
+	container.get_node("WallLeft").position.x = left_x - 10.0
+	container.get_node("WallRight").position.x = right_x + 10.0
+	var floor_collision: CollisionShape2D = container.get_node("Floor/CollisionShape2D")
+	floor_collision.shape = floor_collision.shape.duplicate()
+	floor_collision.shape.size.x = right_x - left_x + 40.0
+	_move_preview(preview_x)
+	for body in dinos.get_children():
+		if body is RigidBody2D and body.is_in_group("dino"):
+			var radius: float = DinoChain.get_level(body.level_index).radius
+			body.position.x = clampf(body.position.x, left_x + radius, right_x - radius)
 
 
 ## Highest chain index the spawner may currently hand the player. It
@@ -222,27 +254,91 @@ func _random_spawn_level() -> int:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		_active_pointer = -2
 		_handle_back_button()
 		get_viewport().set_input_as_handled()
 		return
-	if GameManager.is_game_over:
+	if GameManager.is_game_over or get_tree().paused or tutorial_panel.visible:
+		_active_pointer = -2
 		return
-	if event is InputEventScreenDrag:
-		_move_preview(_to_gameplay_x(event.position.x))
-	elif event is InputEventScreenTouch:
-		_move_preview(_to_gameplay_x(event.position.x))
-		if not event.pressed:
-			_drop()
-	elif event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
+	if event is InputEventScreenTouch:
+		_handle_pointer(event.position, event.pressed, event.index, event.canceled)
+	elif event is InputEventScreenDrag and event.index == _active_pointer:
 		_move_preview(_to_gameplay_x(event.position.x))
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_handle_pointer(event.position, event.pressed, -1)
+	elif event is InputEventMouseMotion and _active_pointer == -1:
 		_move_preview(_to_gameplay_x(event.position.x))
-		if not event.pressed:
+
+
+func _input(event: InputEvent) -> void:
+	# GUI controls may consume a release before _unhandled_input sees it.
+	# End a gesture released over the HUD so the next press remains usable.
+	if event is InputEventScreenTouch and not event.pressed and event.index == _active_pointer:
+		if event.canceled or not _inside_playfield(event.position):
+			_active_pointer = -2
+	elif (
+		event is InputEventMouseButton
+		and not event.pressed
+		and event.button_index == MOUSE_BUTTON_LEFT
+	):
+		if _active_pointer == -1 and not _inside_playfield(event.position):
+			_active_pointer = -2
+
+
+func _handle_pointer(point: Vector2, pressed: bool, pointer: int, canceled: bool = false) -> void:
+	if pressed:
+		if can_drop and _active_pointer == -2 and _inside_playfield(point):
+			_active_pointer = pointer
+			_move_preview(_to_gameplay_x(point.x))
+	elif pointer == _active_pointer:
+		_active_pointer = -2
+		if not canceled and _inside_playfield(point):
+			_move_preview(_to_gameplay_x(point.x))
 			_drop()
+
+
+func _inside_playfield(point: Vector2) -> bool:
+	var world := camera.position + point / _game_scale
+	return Rect2(left_x, 0, right_x - left_x, 1230).has_point(world)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED and is_node_ready():
+		_active_pointer = -2
+		if not get_tree().paused and not GameManager.is_game_over:
+			_on_pause_pressed()
+
+
+func _build_ui() -> void:
+	for path in ["TopBar", "ScoreRow", "NextRow", "SoundGlow", "PauseGlow", "InfoGlow"]:
+		get_node("UI/" + path).hide()
+	var hud := MergeUI.build_hud($UI, [info_button, sound_toggle_btn, pause_button])
+	hud_panel = hud.panel
+	score_label = hud.score
+	hud_record = hud.record
+	next_icon = hud.next
+	second_next_icon = hud.second
+	# Keep overlays above the new HUD in CanvasLayer draw order.
+	$UI.move_child(hud_panel, 0)
+	MergeUI.primary(pause_resume_btn)
+	MergeUI.primary(restart_button)
+	var guide := AimGuide.new()
+	guide.main = self
+	gameplay_root.add_child(guide)
+	gameplay_root.move_child(guide, 1)
+	var card := PanelContainer.new()
+	card.custom_minimum_size.x = 336
+	var center := game_over_vbox.get_parent()
+	center.add_child(card)
+	game_over_vbox.reparent(card)
+	reached_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	reached_label.custom_minimum_size.x = 220
+	background.modulate = Color(0.7, 0.79, 0.78)
 
 
 ## Touch/mouse positions arrive in real viewport pixels; gameplay
-## coordinates (LEFT_X..RIGHT_X) are design/world-space, mapped to the
+## coordinates (left_x..right_x) are design/world-space, mapped to the
 ## viewport only by the camera's zoom/position -- this is the inverse of
 ## that same `screen = (world - camera.position) * zoom` mapping used in
 ## _fit_gameplay_to_viewport.
@@ -252,7 +348,7 @@ func _to_gameplay_x(viewport_x: float) -> float:
 
 func _move_preview(x: float) -> void:
 	var radius := DinoChain.get_level(current_level_index).radius
-	preview_x = clamp(x, LEFT_X + radius, RIGHT_X - radius)
+	preview_x = clamp(x, left_x + radius, right_x - radius)
 	spawner_preview.position.x = preview_x
 
 
@@ -260,6 +356,7 @@ func _drop() -> void:
 	if not can_drop or GameManager.is_game_over:
 		return
 	can_drop = false
+	_active_pointer = -2
 	var dino := DINO_SCENE.instantiate()
 	dinos.add_child(dino)
 	dino.add_to_group("dino")
@@ -271,7 +368,8 @@ func _drop() -> void:
 	GameManager.mark_species_discovered(current_level_index)
 	drop_sfx.play()
 	current_level_index = next_level_index
-	next_level_index = _random_spawn_level()
+	next_level_index = second_next_level_index
+	second_next_level_index = _random_spawn_level()
 	_update_preview()
 	await get_tree().create_timer(0.45).timeout
 	can_drop = true
@@ -279,8 +377,9 @@ func _drop() -> void:
 
 func _update_preview() -> void:
 	spawner_preview.set_level(current_level_index)
-	spawner_preview.position.x = preview_x
+	_move_preview(preview_x)
 	next_icon.texture = DinoChain.get_level(next_level_index).texture
+	second_next_icon.texture = DinoChain.get_level(second_next_level_index).texture
 
 
 func spawn_merged_dino(
@@ -642,12 +741,14 @@ func _handle_back_button() -> void:
 ## sequence_panel.gd) -- pauses like PausePanel so the pile doesn't keep
 ## falling/merging while the player is just checking the chain.
 func _on_info_pressed() -> void:
+	_active_pointer = -2
 	ui_click_sfx.play()
 	get_tree().paused = true
 	sequence_panel.open()
 
 
 func _on_pause_pressed() -> void:
+	_active_pointer = -2
 	if GameManager.is_game_over or pause_panel.visible:
 		return
 	ui_click_sfx.play()
@@ -694,7 +795,7 @@ func _on_pause_settings_closed() -> void:
 	# Settings is the only in-run way to change language; the static labels
 	# auto-translate but the score label is code-built, so refresh it here
 	# (it's still hidden behind the pause overlay at this point).
-	score_label.text = Loc.t("HUD_SCORE", {"score": GameManager.score})
+	_on_score_changed(GameManager.score)
 
 
 func _on_sequence_panel_closed() -> void:
@@ -710,7 +811,8 @@ func _on_pause_menu_pressed() -> void:
 
 
 func _on_score_changed(new_score: int) -> void:
-	score_label.text = Loc.t("HUD_SCORE", {"score": new_score})
+	score_label.text = str(new_score)
+	hud_record.text = Loc.t("UI_RECORD", {"score": maxi(GameManager.high_score, new_score)})
 	_update_background(new_score)
 
 
@@ -824,6 +926,7 @@ func _on_rewarded_continue_result(earned: bool) -> void:
 	can_drop = true
 	current_level_index = _random_spawn_level()
 	next_level_index = _random_spawn_level()
+	second_next_level_index = _random_spawn_level()
 	_update_preview()
 
 

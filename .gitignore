@@ -7,3 +7,15 @@
 *.apk
 *.apk.idsig
 *.aab
+
+# Chaves de assinatura Android e segredos - nunca commitar
+*.keystore
+*.jks
+keystore.properties
+.secrets/
+.env
+
+
+# Logs e saídas de build
+/build/
+

@@ -92,10 +92,22 @@ static func build_hud(host: CanvasLayer, buttons: Array) -> Dictionary:
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	bottom.add_child(hint)
+	var timer := label("", 14, TEXT)
+	timer.custom_minimum_size.x = 64
+	timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	bottom.add_child(timer)
 	for button in buttons:
 		button.reparent(bottom)
 		button.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 		button.ignore_texture_size = true
 		button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		button.custom_minimum_size = Vector2(44, 44)
-	return {"panel": panel, "score": score, "record": record, "next": first, "second": second}
+	return {
+		"panel": panel,
+		"score": score,
+		"record": record,
+		"next": first,
+		"second": second,
+		"mission": hint,
+		"timer": timer,
+	}

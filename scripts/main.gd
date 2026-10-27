@@ -67,6 +67,8 @@ var second_next_level_index: int = 0
 var second_next_icon: TextureRect
 var hud_record: Label
 var hud_panel: PanelContainer
+var hud_mission: Label
+var hud_timer: Label
 var _active_pointer := -2
 var can_drop: bool = true
 var preview_x: float = 360.0
@@ -83,6 +85,7 @@ var _game_scale: float = 1.0
 var _shake_strength := 0.0
 var _shake_until := 0.0
 var _shaking := false
+var _spawn_rng := RandomNumberGenerator.new()
 
 @onready var camera: Camera2D = $Camera2D
 @onready var background: TextureRect = $BackgroundLayer/Background
@@ -138,6 +141,8 @@ func _ready() -> void:
 	GameManager.reset()
 	GameManager.register_game_started()
 	GameManager.score_changed.connect(_on_score_changed)
+	GameManager.timer_changed.connect(_on_timer_changed)
+	GameManager.mission_changed.connect(_on_mission_changed)
 	GameManager.game_over.connect(_on_game_over)
 	restart_button.pressed.connect(_on_restart_pressed)
 	game_over_menu_btn.pressed.connect(_on_pause_menu_pressed)
@@ -155,7 +160,10 @@ func _ready() -> void:
 	sequence_panel.closed.connect(_on_sequence_panel_closed)
 	_update_sound_icon()
 	music.finished.connect(func(): music.play())
-	randomize()
+	if GameManager.run_mode == "daily":
+		_spawn_rng.seed = int(Time.get_unix_time_from_system() / 86400.0)
+	else:
+		_spawn_rng.randomize()
 	game_over_panel.visible = false
 	pause_panel.visible = false
 	confirm_restart_panel.visible = false
@@ -170,6 +178,13 @@ func _ready() -> void:
 	# GameManager.reset() emits score_changed before the connect above, so
 	# seed the HUD label once here (also picks the right locale on boot).
 	_on_score_changed(GameManager.score)
+	_on_timer_changed(GameManager.time_remaining)
+	_on_mission_changed(
+		GameManager.mission_description(),
+		GameManager.mission_progress,
+		GameManager.mission_target,
+		GameManager.mission_completed
+	)
 
 	if not GameManager.has_seen_tutorial:
 		tutorial_panel.open()
@@ -248,7 +263,7 @@ func _random_spawn_level() -> int:
 	# mode, tier 0 the rarest, nothing above `cap`. See SPAWN_TOP_BIAS_ROLLS.
 	var pick := 0
 	for _i in SPAWN_TOP_BIAS_ROLLS:
-		pick = maxi(pick, randi() % (cap + 1))
+		pick = maxi(pick, _spawn_rng.randi_range(0, cap))
 	return pick
 
 
@@ -319,6 +334,8 @@ func _build_ui() -> void:
 	hud_record = hud.record
 	next_icon = hud.next
 	second_next_icon = hud.second
+	hud_mission = hud.mission
+	hud_timer = hud.timer
 	# Keep overlays above the new HUD in CanvasLayer draw order.
 	$UI.move_child(hud_panel, 0)
 	MergeUI.primary(pause_resume_btn)
@@ -814,6 +831,31 @@ func _on_score_changed(new_score: int) -> void:
 	score_label.text = str(new_score)
 	hud_record.text = Loc.t("UI_RECORD", {"score": maxi(GameManager.high_score, new_score)})
 	_update_background(new_score)
+
+
+func _on_timer_changed(seconds_left: float) -> void:
+	if not is_instance_valid(hud_timer):
+		return
+	if not GameManager.is_time_mode():
+		hud_timer.text = ""
+		return
+	var seconds := maxi(0, int(ceil(seconds_left)))
+	hud_timer.text = Loc.t("HUD_TIME", {"seconds": seconds})
+	hud_timer.modulate = Color("ffb36b") if seconds <= 15 else Color("fff2db")
+
+
+func _on_mission_changed(description: String, progress: int, target: int, completed: bool) -> void:
+	if not is_instance_valid(hud_mission):
+		return
+	var short_key := "MISSION_SHORT_SCORE"
+	if GameManager.mission_id == "merges":
+		short_key = "MISSION_SHORT_MERGES"
+	elif GameManager.mission_id == "species":
+		short_key = "MISSION_SHORT_SPECIES"
+	hud_mission.text = ("✅ " if completed else "") + Loc.t(
+		short_key, {"progress": progress, "target": target}
+	)
+	hud_mission.add_theme_font_size_override("font_size", 12)
 
 
 ## Only swaps the texture when crossing into a new tier, not every

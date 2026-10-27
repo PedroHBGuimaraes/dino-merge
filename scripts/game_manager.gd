@@ -11,6 +11,9 @@ signal game_over
 signal continued
 signal achievement_unlocked(id: String)
 signal species_discovered(index: int)
+signal timer_changed(seconds_left: float)
+signal mission_changed(description: String, progress: int, target: int, completed: bool)
+signal fossils_changed(total: int)
 
 ## Game over fires as soon as a dino is settled (see dino.gd's velocity
 ## check) above the danger line. Can't be 0.0: a freshly-spawned dino
@@ -76,6 +79,19 @@ var combo_count: int = 0
 ## Highest chain index produced by a merge in the CURRENT run (-1 = no
 ## merge yet). Reset each run; shown on the game-over screen.
 var run_highest_level: int = -1
+var selected_mode: String = "classic"
+var run_mode: String = "classic"
+var time_remaining: float = 0.0
+const TIME_ATTACK_SECONDS := 90.0
+var mission_id: String = ""
+var mission_target: int = 0
+var mission_progress: int = 0
+var mission_reward: int = 0
+var mission_completed: bool = false
+var fossils: int = 0
+var unlocked_cosmetics: Dictionary = {}
+var daily_best_score: int = 0
+var daily_date: String = ""
 ## Time.get_ticks_msec() of the last merge, or far enough in the past
 ## that the very first merge of a run never reads as "chained".
 var _last_merge_ms: int = -1000000000
@@ -84,6 +100,15 @@ var _last_merge_ms: int = -1000000000
 func _ready() -> void:
 	_load_progress()
 	_apply_audio_settings()
+
+
+func _process(delta: float) -> void:
+	if is_game_over or run_mode not in ["time_attack", "daily"]:
+		return
+	time_remaining = maxf(0.0, time_remaining - delta)
+	timer_changed.emit(time_remaining)
+	if time_remaining <= 0.0:
+		trigger_game_over()
 
 
 ## Pushes the persisted audio prefs onto the actual buses. Called once on
@@ -141,7 +166,12 @@ func reset_all_progress() -> void:
 	has_seen_tutorial = false
 	unlocked_achievements.clear()
 	discovered_species.clear()
+	fossils = 0
+	unlocked_cosmetics.clear()
+	daily_best_score = 0
+	daily_date = ""
 	_save_progress()
+	fossils_changed.emit(fossils)
 
 
 func add_score(points: int) -> void:
@@ -149,6 +179,8 @@ func add_score(points: int) -> void:
 		return
 	score += points
 	score_changed.emit(score)
+	if mission_id == "score":
+		_set_mission_progress(score)
 	for threshold in Achievements.SCORE_THRESHOLDS:
 		if score >= threshold:
 			_unlock("score_%d" % threshold)
@@ -171,6 +203,13 @@ func trigger_game_over() -> void:
 	if is_game_over:
 		return
 	is_game_over = true
+	if run_mode == "daily":
+		var today := Time.get_date_string_from_system()
+		if daily_date != today:
+			daily_date = today
+			daily_best_score = score
+		elif score > daily_best_score:
+			daily_best_score = score
 	is_new_record = score > high_score
 	if is_new_record:
 		high_score = score
@@ -192,12 +231,16 @@ func continue_run() -> void:
 
 func reset() -> void:
 	score = 0
+	run_mode = selected_mode
 	is_game_over = false
 	is_new_record = false
 	combo_count = 0
 	run_highest_level = -1
 	_last_merge_ms = -1000000000
+	time_remaining = TIME_ATTACK_SECONDS if run_mode in ["time_attack", "daily"] else 0.0
+	_setup_mission()
 	score_changed.emit(score)
+	timer_changed.emit(time_remaining)
 
 
 func mark_tutorial_seen() -> void:
@@ -234,6 +277,10 @@ func register_merge(new_level_index: int) -> void:
 		_unlock("trex")
 	elif new_level_index == DinoChain.level_count() - 1:
 		_unlock("legendary")
+	if mission_id == "merges":
+		_set_mission_progress(total_merges)
+	if total_merges % 5 == 0:
+		add_fossils(1)
 	_save_progress()
 
 
@@ -246,6 +293,8 @@ func mark_species_discovered(index: int) -> void:
 		return
 	discovered_species[key] = true
 	species_discovered.emit(index)
+	if mission_id == "species":
+		_set_mission_progress(discovered_count())
 	_save_progress()
 
 
@@ -272,6 +321,77 @@ func _unlock(id: String) -> void:
 ## Chamado pelo LocaleManager.set_language() pra gravar a escolha manual
 ## de idioma (já em LocaleManager.language) no mesmo save do progresso.
 func save_language() -> void:
+	_save_progress()
+
+
+func select_mode(mode: String) -> void:
+	if mode in ["classic", "time_attack", "daily", "zen"]:
+		selected_mode = mode
+
+
+func is_zen_mode() -> bool:
+	return run_mode == "zen"
+
+
+func is_time_mode() -> bool:
+	return run_mode in ["time_attack", "daily"]
+
+
+func mode_loc_key() -> String:
+	match run_mode:
+		"time_attack": return "MODE_TIME_ATTACK"
+		"daily": return "MODE_DAILY"
+		"zen": return "MODE_ZEN"
+		_: return "MODE_CLASSIC"
+
+
+func selected_mode_loc_key() -> String:
+	match selected_mode:
+		"time_attack": return "MODE_TIME_ATTACK"
+		"daily": return "MODE_DAILY"
+		"zen": return "MODE_ZEN"
+		_: return "MODE_CLASSIC"
+
+
+func mission_description() -> String:
+	match mission_id:
+		"merges": return Loc.t("MISSION_MERGES", {"target": mission_target})
+		"species": return Loc.t("MISSION_SPECIES", {"target": mission_target})
+		_: return Loc.t("MISSION_SCORE", {"target": mission_target})
+
+
+func _setup_mission() -> void:
+	var day_index := int(Time.get_unix_time_from_system() / 86400.0)
+	var choice := day_index % 3 if run_mode == "daily" else (games_played + day_index) % 3
+	mission_id = ["score", "merges", "species"][choice]
+	mission_target = 1500 if mission_id == "score" else (12 if mission_id == "merges" else 6)
+	mission_reward = 5 if run_mode == "daily" else 3
+	mission_progress = 0
+	mission_completed = false
+	mission_changed.emit(mission_description(), mission_progress, mission_target, mission_completed)
+
+
+func _set_mission_progress(value: int) -> void:
+	if mission_completed:
+		return
+	mission_progress = mini(value, mission_target)
+	if mission_progress >= mission_target:
+		mission_completed = true
+		add_fossils(mission_reward)
+		mission_changed.emit(mission_description(), mission_progress, mission_target, true)
+		return
+	mission_changed.emit(mission_description(), mission_progress, mission_target, false)
+
+
+func add_fossils(amount: int) -> void:
+	if amount <= 0:
+		return
+	fossils += amount
+	if fossils >= 10:
+		unlocked_cosmetics["theme_volcanic"] = true
+	if fossils >= 25:
+		unlocked_cosmetics["theme_amber"] = true
+	fossils_changed.emit(fossils)
 	_save_progress()
 
 
@@ -308,6 +428,15 @@ func _load_progress() -> void:
 			sfx_volume = 0.0
 		if data.has("vibration_enabled"):
 			vibration_enabled = bool(data["vibration_enabled"])
+		if data.has("fossils"):
+			fossils = maxi(0, int(data["fossils"]))
+		if data.has("unlocked_cosmetics") and typeof(data["unlocked_cosmetics"]) == TYPE_ARRAY:
+			for cosmetic in data["unlocked_cosmetics"]:
+				unlocked_cosmetics[str(cosmetic)] = true
+		if data.has("daily_best_score"):
+			daily_best_score = maxi(0, int(data["daily_best_score"]))
+		if data.has("daily_date"):
+			daily_date = str(data["daily_date"])
 		if (
 			data.has("unlocked_achievements")
 			and typeof(data["unlocked_achievements"]) == TYPE_ARRAY
@@ -339,6 +468,10 @@ func _save_progress() -> void:
 		"music_volume": music_volume,
 		"sfx_volume": sfx_volume,
 		"vibration_enabled": vibration_enabled,
+		"fossils": fossils,
+		"unlocked_cosmetics": unlocked_cosmetics.keys(),
+		"daily_best_score": daily_best_score,
+		"daily_date": daily_date,
 	}
 	file.store_string(JSON.stringify(data))
 	file.close()

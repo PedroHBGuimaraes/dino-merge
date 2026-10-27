@@ -53,6 +53,11 @@ var _idle_frames: Array[Texture2D] = []
 var _idle_frame_index: int = 0
 var _idle_elapsed: float = 0.0
 var _has_landed: bool = false
+## The canonical render scale for this level. Temporary squash/stretch effects
+## must always return here instead of using the currently animated scale as a
+## new baseline (which otherwise makes repeated nudges accumulate drift).
+var _base_sprite_scale: Vector2 = Vector2.ONE
+var _nudge_tween: Tween
 ## True only during the brief post-merge growth animation (baby -> young ->
 ## adult). Blocks the idle-frame loop in _process so it doesn't overwrite
 ## the growth textures mid-animation.
@@ -66,6 +71,10 @@ func setup(index: int) -> void:
 	level_index = index
 	var lvl := DinoChain.get_level(index)
 	var scale_factor: float = (lvl.radius * 2.0) / max(lvl.content_size, 1.0)
+	_base_sprite_scale = Vector2(scale_factor, scale_factor)
+	if _nudge_tween and is_instance_valid(_nudge_tween):
+		_nudge_tween.kill()
+	sprite.scale = _base_sprite_scale
 	_top_offset = lvl.radius
 	if lvl.texture and not lvl.collision_hull.is_empty():
 		# Convex hull of the real sprite silhouette (see
@@ -102,7 +111,7 @@ func setup(index: int) -> void:
 		sprite.visible = true
 		# Scale by the sprite's actual content size, not the raw canvas --
 		# see DinoLevel.content_size.
-		sprite.scale = Vector2(scale_factor, scale_factor)
+		sprite.scale = _base_sprite_scale
 	else:
 		sprite.visible = false
 	# Bigger dinos are heavier (so a light hatchling dropped on top can't
@@ -133,7 +142,7 @@ func play_birth_animation() -> void:
 	if not sprite.visible:
 		return
 	var lvl := DinoChain.get_level(level_index)
-	var base_scale := sprite.scale
+	var base_scale := _base_sprite_scale
 
 	if lvl.idle_frames_baby.is_empty():
 		sprite.scale = Vector2(base_scale.x, base_scale.y * 0.6)
@@ -203,7 +212,7 @@ func _spawn_landing_dust() -> void:
 ## quick sprite squash, so a merge visibly ripples through the pile
 ## instead of the pile just silently absorbing it.
 func nudge(from: Vector2) -> void:
-	if _merging or freeze or not sprite.visible:
+	if _merging or _birthing or freeze or not sprite.visible:
 		return
 	var away := global_position - from
 	var dist := away.length()
@@ -213,10 +222,22 @@ func nudge(from: Vector2) -> void:
 	# through the pile, not add a big outward kick to every neighbour of
 	# every merge -- in a combo cascade those stacked up into launches.
 	apply_central_impulse(away.normalized() * clampf(90.0 - dist * 0.25, 15.0, 90.0))
-	var base := sprite.scale
-	var t := create_tween()
-	t.tween_property(sprite, "scale", Vector2(base.x * 1.12, base.y * 0.88), 0.06)
-	t.tween_property(sprite, "scale", base, 0.12).set_trans(Tween.TRANS_SINE)
+	# A dino can be nudged again before the previous squash has finished.
+	# Cancel that animation and restart from the canonical level scale so the
+	# visual effect can never permanently resize one instance of a species.
+	if _nudge_tween and is_instance_valid(_nudge_tween):
+		_nudge_tween.kill()
+	sprite.scale = _base_sprite_scale
+	_nudge_tween = create_tween()
+	_nudge_tween.tween_property(
+		sprite,
+		"scale",
+		Vector2(_base_sprite_scale.x * 1.12, _base_sprite_scale.y * 0.88),
+		0.06
+	)
+	_nudge_tween.tween_property(sprite, "scale", _base_sprite_scale, 0.12).set_trans(
+		Tween.TRANS_SINE
+	)
 
 
 func _ready() -> void:
@@ -270,7 +291,7 @@ func _draw() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if GameManager.is_game_over or _merging:
+	if GameManager.is_game_over or GameManager.is_zen_mode() or _merging:
 		return
 	# World space == design space directly (GameplayRoot no longer scales
 	# -- see main.gd's _fit_gameplay_to_viewport -- so no conversion is
@@ -328,6 +349,13 @@ func _on_body_entered(body: Node) -> void:
 func _do_merge(other: RigidBody2D) -> void:
 	if not is_instance_valid(other):
 		return
+	# Do not let an outstanding neighbour squash fight the merge animation or
+	# make the two source dinos appear to have different base sizes.
+	if _nudge_tween and is_instance_valid(_nudge_tween):
+		_nudge_tween.kill()
+	sprite.scale = _base_sprite_scale
+	if other.has_method("_stop_nudge_tween"):
+		other.call("_stop_nudge_tween")
 	freeze = true
 	other.freeze = true
 	linear_velocity = Vector2.ZERO
@@ -389,3 +417,9 @@ func _do_merge(other: RigidBody2D) -> void:
 
 	other.queue_free()
 	queue_free()
+
+
+func _stop_nudge_tween() -> void:
+	if _nudge_tween and is_instance_valid(_nudge_tween):
+		_nudge_tween.kill()
+	sprite.scale = _base_sprite_scale
